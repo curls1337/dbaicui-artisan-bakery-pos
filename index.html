@@ -186,6 +186,11 @@
         <span>Printer 80mm ESC/POS</span>
       </div>
 
+      <a href="https://dbaicui.5nod.com/api/health" target="_blank" title="Status API Backend Produksi" class="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 text-xs font-mono font-bold border border-blue-200 hover:bg-blue-100 transition">
+        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+        <span>API Live 200 OK</span>
+      </a>
+
       <button onclick="toggleViewMode()" id="view-mode-toggle" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-espresso text-white hover:bg-stone-800 flex items-center gap-1.5 shadow-sm transition">
         <i data-lucide="smartphone" class="w-4 h-4 text-goldlight"></i>
         <span id="view-mode-label">Simulator Mobile</span>
@@ -1652,7 +1657,7 @@
 
           <div class="bg-white p-4 rounded-2xl border border-hairline space-y-3 text-xs">
             <div class="font-bold text-stone-700">Pengaturan Backend Server URL</div>
-            <input type="text" value="https://webui.5nod.com/staging/saint-sejarah-firaun/api" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2 font-mono text-[10px]" />
+            <input type="text" value="https://dbaicui.5nod.com/api" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2 font-mono text-[10px]" />
             <p class="text-[10px] text-stone-400">Aplikasi mobile Flutter otomatis tersambung ke endpoint server produksi ini.</p>
           </div>
         `;

@@ -113,7 +113,7 @@ class BakeryAppState extends ChangeNotifier {
   bool isAuthenticated = false;
   UserRole activeRole = UserRole.owner;
   bool isDarkTheme = true;
-  String serverUrl = 'https://api.dbaicui.id';
+  String serverUrl = 'https://dbaicui.5nod.com';
 
   final List<BakeryProduct> products = [
     BakeryProduct(
