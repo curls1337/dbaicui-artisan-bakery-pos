@@ -234,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           backgroundColor: const Color(0xFFD97706),
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangle.circular(14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         child: const Text(
                           "Masuk ke Sistem",
