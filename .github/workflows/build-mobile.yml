@@ -1,0 +1,127 @@
+name: Build Mobile App (iOS IPA & Android APK)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build Android APK (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Scaffold Native Shells & Restore Custom Lib
+        run: |
+          mkdir -p /tmp/custom_src
+          cp -r lib /tmp/custom_src/
+          cp pubspec.yaml /tmp/custom_src/
+          flutter create --platforms=android,ios --org com.devcurl.dbaicui --project-name app_mobile .
+          cp -r /tmp/custom_src/lib/* lib/
+          cp /tmp/custom_src/pubspec.yaml pubspec.yaml
+          flutter pub get
+
+      - name: Build Release APK
+        run: |
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk ./AppRelease.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-APK
+          path: mobile/AppRelease.apk
+
+  build-ios:
+    name: Build iOS Sideload IPA (Flutter)
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Scaffold Native Shells & Restore Custom Lib
+        run: |
+          mkdir -p /tmp/custom_src
+          cp -r lib /tmp/custom_src/
+          cp pubspec.yaml /tmp/custom_src/
+          flutter create --platforms=android,ios --org com.devcurl.dbaicui --project-name app_mobile .
+          cp -r /tmp/custom_src/lib/* lib/
+          cp /tmp/custom_src/pubspec.yaml pubspec.yaml
+          flutter pub get
+
+      - name: Build Unsigned iOS App & Package IPA
+        run: |
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r ./AppRelease.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iOS-IPA
+          path: mobile/AppRelease.ipa
+
+  publish-release:
+    name: Publish IPA & APK to GitHub Releases
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: Android-APK
+          path: ./release-files
+
+      - name: Download IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: iOS-IPA
+          path: ./release-files
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "Release v1.0.${{ github.run_number }} (iOS .ipa & Android .apk)"
+          body: |
+            ## D'Bai Cui Artisan Bakery - Mobile Client Release
+            Paket instalasi mobile mandiri yang siap diunduh dan dipasang:
+            - 📱 **`AppRelease.ipa`**: iOS Sideloadable (Gunakan ESign, Scarlet, AltStore, atau Sideloadly)
+            - 🤖 **`AppRelease.apk`**: Android Standalone Release APK (Langsung install di Android 10 - 14+)
+          draft: false
+          prerelease: false
+          files: |
+            ./release-files/AppRelease.ipa
+            ./release-files/AppRelease.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

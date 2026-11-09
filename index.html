@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D'Bai Cui — Artisan Bakery & POS Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            cashmere: '#FAF8F5',
+            ivory: '#F3EFE9',
+            espresso: '#1E1B18',
+            velvet: '#881337',
+            roseaccent: '#BE123C',
+            gold: '#D97706',
+            goldlight: '#FDE68A',
+            hairline: '#E7E1D8',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #FAF8F5;
+      color: #1E1B18;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .luxury-card {
+      background: #FFFFFF;
+      border: 1px solid #E7E1D8;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 4px 14px rgba(30,27,24,0.04);
+    }
+    .glass-bar {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #E7E1D8;
+    }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #FAF8F5; }
+    ::-webkit-scrollbar-thumb { background: #D6CFC7; border-radius: 99px; }
+
+    /* Mobile Simulator Frames */
+    .iphone-frame {
+      width: 390px;
+      height: 810px;
+      border-radius: 52px;
+      border: 12px solid #1C1917;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.28), inset 0 0 0 2px #44403C;
+      position: relative;
+      overflow: hidden;
+      background: #FAF8F5;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .android-frame {
+      width: 390px;
+      height: 810px;
+      border-radius: 36px;
+      border: 10px solid #0F172A;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.28), inset 0 0 0 2px #334155;
+      position: relative;
+      overflow: hidden;
+      background: #F8FAFC;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dynamic-island {
+      width: 120px;
+      height: 32px;
+      background: #000;
+      border-radius: 99px;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+    }
+    .punch-hole {
+      width: 18px;
+      height: 18px;
+      background: #000;
+      border-radius: 50%;
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+    }
+
+    /* Thermal Receipt Print Rules (Quiet Luxury POS Standards) */
+    @media print {
+      @page { size: 58mm auto; margin: 0mm; }
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+      body * { visibility: hidden; }
+      #thermal-receipt-area, #thermal-receipt-area * { visibility: visible; }
+      #thermal-receipt-area {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 48mm !important;
+        max-width: 48mm !important;
+        margin: 0 !important;
+        padding: 2mm 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-velvet selection:text-white">
+  <!-- TOP KIOSK HEADER & QUICK ROLE SWITCHER -->
+  <header class="glass-bar sticky top-0 z-30 px-4 lg:px-6 py-2.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-velvet text-white flex items-center justify-center font-serif text-xl font-bold shadow-md shadow-velvet/20">
+        D
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-serif font-bold text-lg text-espresso tracking-tight">D'Bai Cui</h1>
+          <span class="text-[10px] font-mono tracking-wider uppercase px-2 py-0.5 rounded-full bg-gold/15 text-gold font-bold">Artisan Patisserie</span>
+        </div>
+        <p class="text-xs text-stone-500 flex items-center gap-2">
+          <span>Cabang Senopati, Jakarta</span>
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span id="pos-clock" class="font-mono text-[11px] text-stone-600">12:00:00</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- QUICK ROLE SWITCHER BAR (FLOATING 1-KLIK) -->
+    <div class="hidden md:flex items-center gap-1.5 bg-ivory/80 p-1 rounded-2xl border border-hairline shadow-inner">
+      <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider px-2">Role:</span>
+      <button onclick="setRole('owner')" id="role-btn-owner" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white text-espresso shadow-sm border border-hairline">
+        <span>👑</span> <span>Owner</span>
+      </button>
+      <button onclick="setRole('manager')" id="role-btn-manager" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-espresso">
+        <span>👨‍🍳</span> <span>Chef/Manager</span>
+      </button>
+      <button onclick="setRole('cashier')" id="role-btn-cashier" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-espresso">
+        <span>🏷️</span> <span>Kasir POS</span>
+      </button>
+      <button onclick="setRole('customer')" id="role-btn-customer" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-espresso">
+        <span>👤</span> <span>Pelanggan</span>
+      </button>
+    </div>
+
+    <!-- KIOSK HARDWARE CONTROLS & DUAL VIEW SWITCHER -->
+    <div class="flex items-center gap-2">
+      <button onclick="openCashDrawer()" title="Buka Laci Kasir (Cash Drawer)" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-hairline text-stone-700 hover:bg-stone-50 flex items-center gap-1.5 shadow-sm transition">
+        <i data-lucide="vault" class="w-4 h-4 text-gold"></i>
+        <span class="hidden sm:inline">Laci Kas</span>
+      </button>
+
+      <div class="hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-mono font-bold border border-emerald-200">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Printer 80mm ESC/POS</span>
+      </div>
+
+      <button onclick="toggleViewMode()" id="view-mode-toggle" class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-espresso text-white hover:bg-stone-800 flex items-center gap-1.5 shadow-sm transition">
+        <i data-lucide="smartphone" class="w-4 h-4 text-goldlight"></i>
+        <span id="view-mode-label">Simulator Mobile</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="min-h-[calc(100vh-65px)] flex">
+    
+    <!-- DESKTOP SUITE WRAPPER -->
+    <div id="desktop-suite" class="flex-1 flex w-full">
+      
+      <!-- COLLAPSIBLE VERTICAL SIDEBAR -->
+      <aside class="w-64 bg-white border-r border-hairline p-4 flex flex-col justify-between shrink-0">
+        <div class="space-y-6">
+          <!-- Active Operator Badge -->
+          <div class="p-3 rounded-2xl bg-ivory/60 border border-hairline">
+            <div class="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Operator Aktif</div>
+            <div class="flex items-center justify-between mt-1">
+              <div class="font-bold text-sm text-espresso flex items-center gap-2">
+                <span id="operator-icon">👑</span>
+                <span id="operator-name">Bapak Hendra (Owner)</span>
+              </div>
+            </div>
+            <div class="mt-2 text-[11px] text-stone-500 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span id="operator-badge" class="font-medium text-emerald-700">Akses Penuh Superadmin</span>
+            </div>
+          </div>
+
+          <!-- Navigation Links -->
+          <nav class="space-y-1">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-velvet text-white shadow-sm shadow-velvet/20">
+              <div class="flex items-center gap-3">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                <span>Executive Dashboard</span>
+              </div>
+            </button>
+
+            <button onclick="switchTab('pos')" id="nav-pos" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-stone-600 hover:bg-ivory hover:text-espresso">
+              <div class="flex items-center gap-3">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                <span>Kasir POS & Custom</span>
+              </div>
+              <span id="badge-cart-count" class="px-2 py-0.5 rounded-full bg-roseaccent text-white text-[10px] font-mono hidden">0</span>
+            </button>
+
+            <button onclick="switchTab('kitchen')" id="nav-kitchen" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-stone-600 hover:bg-ivory hover:text-espresso">
+              <div class="flex items-center gap-3">
+                <i data-lucide="flame" class="w-4 h-4"></i>
+                <span>Dapur & 3 Unit Oven</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-gold/20 text-gold font-mono text-[10px]">3 Aktif</span>
+            </button>
+
+            <button onclick="switchTab('inventory')" id="nav-inventory" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-stone-600 hover:bg-ivory hover:text-espresso">
+              <div class="flex items-center gap-3">
+                <i data-lucide="boxes" class="w-4 h-4"></i>
+                <span>Bahan Baku (BOM/FEFO)</span>
+              </div>
+              <span id="badge-low-stock" class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-mono text-[10px]">2 Tipis</span>
+            </button>
+
+            <button onclick="switchTab('customer-portal')" id="nav-customer-portal" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-stone-600 hover:bg-ivory hover:text-espresso">
+              <div class="flex items-center gap-3">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                <span>Pelanggan & Tracking</span>
+              </div>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Terminal Quick-Lock & Data Backup -->
+        <div class="pt-4 border-t border-hairline space-y-2">
+          <div class="flex items-center gap-2">
+            <button onclick="resetDataDefault()" class="flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold text-stone-500 hover:bg-stone-100 flex items-center justify-center gap-1 border border-hairline transition">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+              <span>Reset Data</span>
+            </button>
+            <button onclick="exportJSONBackup()" class="flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold text-stone-500 hover:bg-stone-100 flex items-center justify-center gap-1 border border-hairline transition">
+              <i data-lucide="download" class="w-3 h-3"></i>
+              <span>Export</span>
+            </button>
+          </div>
+          <button onclick="openPinModal()" class="w-full py-2 rounded-xl text-xs font-bold text-espresso bg-ivory hover:bg-stone-200 border border-hairline flex items-center justify-center gap-2 transition">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>Kunci Terminal (PIN)</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- CONTENT PANELS -->
+      <main class="flex-1 p-6 overflow-y-auto max-h-[calc(100vh-65px)]">
+
+        <!-- TAB 1: OWNER EXECUTIVE DASHBOARD -->
+        <section id="panel-dashboard" class="space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="font-serif font-bold text-2xl text-espresso">Executive Performance & P&L</h2>
+              <p class="text-xs text-stone-500">Metrik finansial real-time D'Bai Cui Bakery (Senopati Flagship Store)</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-stone-500">Periode:</span>
+              <select class="text-xs font-bold bg-white border border-hairline rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-velvet">
+                <option>Hari Ini (Senin, 9 Nov)</option>
+                <option>7 Hari Terakhir</option>
+                <option>Bulan Berjalan</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- BENTO KPI GRID 2x2 -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="luxury-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-stone-500 font-medium">
+                <span>Omzet Hari Ini</span>
+                <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="trending-up" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-revenue" class="mt-2 text-2xl font-mono font-extrabold text-espresso tabular-nums">Rp 14.850.000</div>
+              <div class="mt-2 text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                <span>▲ +16.4%</span>
+                <span class="text-stone-400 font-normal">vs kemarin (Rp 12.750.000)</span>
+              </div>
+            </div>
+
+            <div class="luxury-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-stone-500 font-medium">
+                <span>Laba Bersih (Net Profit)</span>
+                <span class="p-1.5 rounded-lg bg-rose-50 text-velvet"><i data-lucide="pie-chart" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-profit" class="mt-2 text-2xl font-mono font-extrabold text-velvet tabular-nums">Rp 6.240.000</div>
+              <div class="mt-2 text-[11px] text-stone-500">
+                <span class="font-bold text-emerald-600">Margin: 42.0%</span>
+                <span class="text-stone-400 ml-1">(Sehat & Sesuai Target)</span>
+              </div>
+            </div>
+
+            <div class="luxury-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-stone-500 font-medium">
+                <span>Rata-rata HPP / COGS (BOM)</span>
+                <span class="p-1.5 rounded-lg bg-amber-50 text-gold"><i data-lucide="scale" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-cogs" class="mt-2 text-2xl font-mono font-extrabold text-espresso tabular-nums">38.2%</div>
+              <div class="mt-2 text-[11px] text-stone-500">
+                <span class="text-emerald-600 font-bold">FEFO Stabil</span>
+                <span class="text-stone-400 ml-1">(Efisiensi Butter & Tepung)</span>
+              </div>
+            </div>
+
+            <div class="luxury-card p-5 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-stone-500 font-medium">
+                <span>Total Transaksi POS</span>
+                <span class="p-1.5 rounded-lg bg-blue-50 text-blue-600"><i data-lucide="receipt" class="w-4 h-4"></i></span>
+              </div>
+              <div id="kpi-orders-count" class="mt-2 text-2xl font-mono font-extrabold text-espresso tabular-nums">128 Pesanan</div>
+              <div class="mt-2 text-[11px] text-stone-500">
+                <span>Rata-rata: </span>
+                <span class="font-mono font-bold text-espresso">Rp 116.000 / struk</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHARTS & BEST SELLERS -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="luxury-card p-5 rounded-2xl lg:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="font-serif font-bold text-base text-espresso">Tren Penjualan 7 Hari Terakhir</h3>
+                  <p class="text-xs text-stone-500">Perbandingan Omzet Harian vs Biaya Bahan Baku (HPP)</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-ivory text-stone-600 text-[11px] font-mono font-bold">Dalam Jutaan Rupiah</span>
+              </div>
+              <div class="h-64">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+
+            <div class="luxury-card p-5 rounded-2xl flex flex-col justify-between">
+              <div>
+                <h3 class="font-serif font-bold text-base text-espresso mb-1">5 Produk Terlaris Hari Ini</h3>
+                <p class="text-xs text-stone-500 mb-4">Volume penjualan etalase pastry</p>
+                
+                <div class="space-y-3" id="top-products-list">
+                  <!-- Populated by JS -->
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-hairline mt-4 flex items-center justify-between text-xs">
+                <span class="text-stone-500">Kapasitas Oven Terpakai:</span>
+                <span class="font-mono font-bold text-emerald-600">82% Optimal</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: KASIR POS & CUSTOM CAKE -->
+        <section id="panel-pos" class="hidden space-y-4">
+          <div class="flex flex-col xl:flex-row gap-6">
+            
+            <!-- LEFT: CATALOG & FILTER -->
+            <div class="flex-1 space-y-4">
+              <!-- Search & Category Chips -->
+              <div class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="relative flex-1 w-full">
+                  <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                  <input type="text" id="pos-search" oninput="renderPosCatalog()" placeholder="Cari croissant, opera cake, sourdough, macaron..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-hairline text-xs focus:outline-none focus:ring-1 focus:ring-velvet shadow-sm" />
+                </div>
+                <button onclick="openCustomCakeModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-velvet text-white text-xs font-bold hover:bg-rose-900 transition flex items-center justify-center gap-2 shrink-0 shadow-sm shadow-velvet/20">
+                  <i data-lucide="cake" class="w-4 h-4 text-goldlight"></i>
+                  <span>+ Custom Birthday Cake</span>
+                </button>
+              </div>
+
+              <!-- Categories Filter Chips -->
+              <div class="flex items-center gap-2 overflow-x-auto pb-1" id="category-chips">
+                <!-- Injected via JS -->
+              </div>
+
+              <!-- Catalog Grid (Anti-clipping min-h 225px) -->
+              <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5" id="pos-catalog-grid">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- RIGHT: CART & QUICK TENDER DRAWER -->
+            <div class="w-full xl:w-96 shrink-0 space-y-4">
+              <div class="luxury-card rounded-2xl p-4 flex flex-col justify-between min-h-[600px]">
+                <div>
+                  <!-- Cart Header & Customer Selector -->
+                  <div class="pb-3 border-b border-hairline flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i data-lucide="shopping-bag" class="w-4 h-4 text-velvet"></i>
+                      <h3 class="font-serif font-bold text-sm text-espresso">Keranjang Pesanan</h3>
+                    </div>
+                    <button onclick="clearCart()" class="text-[11px] font-bold text-stone-400 hover:text-red-600 transition">Kosongkan</button>
+                  </div>
+
+                  <!-- Customer Select / Member Tier -->
+                  <div class="py-3 border-b border-hairline">
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-1">Pelanggan / Member VIP</label>
+                    <select id="cart-customer-select" onchange="updateCartCalculations()" class="w-full bg-ivory/60 border border-hairline rounded-xl text-xs font-bold text-espresso px-2.5 py-1.5 focus:outline-none">
+                      <option value="walk-in">Walk-in Customer (Non-Member 0%)</option>
+                      <option value="gold" selected>Ibu Jessica Tan (VIP Gold Member - Diskon 10%)</option>
+                      <option value="silver">Bapak Andi Wijaya (Silver Member - Diskon 5%)</option>
+                    </select>
+                  </div>
+
+                  <!-- Cart Items List -->
+                  <div class="py-2 divide-y divide-hairline max-h-64 overflow-y-auto" id="cart-items-container">
+                    <!-- Injected via JS -->
+                  </div>
+                </div>
+
+                <!-- Summary & Quick Tender Shortcuts -->
+                <div class="pt-3 border-t border-hairline space-y-3">
+                  <div class="space-y-1.5 text-xs">
+                    <div class="flex justify-between text-stone-500">
+                      <span>Subtotal</span>
+                      <span id="cart-subtotal" class="font-mono font-bold text-espresso tabular-nums">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-emerald-600 font-medium">
+                      <span id="cart-discount-label">Diskon Member (10%)</span>
+                      <span id="cart-discount" class="font-mono font-bold tabular-nums">- Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-stone-500">
+                      <span>PPN Restoran (10%)</span>
+                      <span id="cart-tax" class="font-mono font-bold text-espresso tabular-nums">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-extrabold text-espresso pt-2 border-t border-hairline">
+                      <span>Total Tagihan</span>
+                      <span id="cart-total" class="font-mono text-base text-velvet tabular-nums">Rp 0</span>
+                    </div>
+                  </div>
+
+                  <!-- QUICK TENDER SHORTCUTS (1-Tap Buttons) -->
+                  <div class="grid grid-cols-3 gap-1.5 pt-1">
+                    <button onclick="quickPay('qris')" class="py-2 rounded-xl text-xs font-bold bg-ivory hover:bg-stone-200 text-stone-700 flex items-center justify-center gap-1 border border-hairline transition">
+                      <span>⚡ QRIS</span>
+                    </button>
+                    <button onclick="quickPay('exact')" class="py-2 rounded-xl text-xs font-bold bg-ivory hover:bg-stone-200 text-stone-700 flex items-center justify-center gap-1 border border-hairline transition">
+                      <span>💵 Uang Pas</span>
+                    </button>
+                    <button onclick="quickPay('edc')" class="py-2 rounded-xl text-xs font-bold bg-ivory hover:bg-stone-200 text-stone-700 flex items-center justify-center gap-1 border border-hairline transition">
+                      <span>💳 EDC/Debit</span>
+                    </button>
+                  </div>
+
+                  <!-- Denomination Pills -->
+                  <div class="flex items-center gap-1.5 text-[11px] font-mono">
+                    <button onclick="setCashAmount(50000)" class="flex-1 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold border border-hairline">50k</button>
+                    <button onclick="setCashAmount(100000)" class="flex-1 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold border border-hairline">100k</button>
+                    <button onclick="setCashAmount(200000)" class="flex-1 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold border border-hairline">200k</button>
+                  </div>
+
+                  <!-- Main Checkout Button -->
+                  <button onclick="openPaymentModal()" id="btn-checkout" class="w-full py-3 rounded-2xl bg-velvet hover:bg-rose-900 text-white font-bold text-xs shadow-md shadow-velvet/20 flex items-center justify-center gap-2 transition disabled:opacity-50">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <span>Selesaikan Transaksi & Cetak Struk</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: KITCHEN DISPLAY SYSTEM (KDS) & 3 UNIT OVEN -->
+        <section id="panel-kitchen" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="font-serif font-bold text-2xl text-espresso">Kitchen Display & 3 Unit Oven KDS</h2>
+              <p class="text-xs text-stone-500">Monitor antrean pemanggangan roti & sinkronisasi otomatis bahan baku (BOM)</p>
+            </div>
+            <span class="px-3 py-1.5 rounded-xl bg-gold/15 text-gold text-xs font-mono font-bold border border-gold/30">
+              Oven Controller: Stone Base & Convection
+            </span>
+          </div>
+
+          <!-- 3 UNIT OVEN MONITORS -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Oven 1: Deck Stone Base -->
+            <div class="luxury-card p-5 rounded-2xl border-t-4 border-t-roseaccent space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-serif font-bold text-base text-espresso">Oven 1 — Deck Stone</h3>
+                  <p class="text-xs text-stone-400">Sourdough & Baguette Artisan</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-rose-50 text-roseaccent font-mono text-xs font-bold animate-pulse">230°C</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-ivory/80 border border-hairline space-y-2">
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Batch Aktif:</span>
+                  <span class="font-bold text-espresso">Country Sourdough (12 pcs)</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Sisa Waktu:</span>
+                  <span id="oven1-timer" class="font-mono font-extrabold text-velvet text-sm">08:42</span>
+                </div>
+                <div class="w-full bg-stone-200 rounded-full h-1.5">
+                  <div class="bg-velvet h-1.5 rounded-full" style="width: 65%"></div>
+                </div>
+              </div>
+              <button onclick="finishBaking(1, 'Country Sourdough (12 pcs)')" class="w-full py-2 rounded-xl text-xs font-bold bg-white border border-hairline text-espresso hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition flex items-center justify-center gap-1.5">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Selesai & Kurangi Bahan BOM</span>
+              </button>
+            </div>
+
+            <!-- Oven 2: Convection Pastry -->
+            <div class="luxury-card p-5 rounded-2xl border-t-4 border-t-gold space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-serif font-bold text-base text-espresso">Oven 2 — Convection</h3>
+                  <p class="text-xs text-stone-400">Croissant & Danish Pastry</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-amber-50 text-gold font-mono text-xs font-bold animate-pulse">185°C</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-ivory/80 border border-hairline space-y-2">
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Batch Aktif:</span>
+                  <span class="font-bold text-espresso">Croissant Almond (24 pcs)</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Sisa Waktu:</span>
+                  <span id="oven2-timer" class="font-mono font-extrabold text-gold text-sm">03:15</span>
+                </div>
+                <div class="w-full bg-stone-200 rounded-full h-1.5">
+                  <div class="bg-gold h-1.5 rounded-full" style="width: 85%"></div>
+                </div>
+              </div>
+              <button onclick="finishBaking(2, 'Croissant Almond (24 pcs)')" class="w-full py-2 rounded-xl text-xs font-bold bg-white border border-hairline text-espresso hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition flex items-center justify-center gap-1.5">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Selesai & Kurangi Bahan BOM</span>
+              </button>
+            </div>
+
+            <!-- Oven 3: Rotary Sponge & Choux -->
+            <div class="luxury-card p-5 rounded-2xl border-t-4 border-t-blue-500 space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-serif font-bold text-base text-espresso">Oven 3 — Rotary Deck</h3>
+                  <p class="text-xs text-stone-400">Sponge Cake & Choux Craquelin</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 font-mono text-xs font-bold animate-pulse">160°C</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-ivory/80 border border-hairline space-y-2">
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Batch Aktif:</span>
+                  <span class="font-bold text-espresso">Opera Sponge Base (6 loyang)</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                  <span class="text-stone-500">Sisa Waktu:</span>
+                  <span id="oven3-timer" class="font-mono font-extrabold text-blue-600 text-sm">14:50</span>
+                </div>
+                <div class="w-full bg-stone-200 rounded-full h-1.5">
+                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: 35%"></div>
+                </div>
+              </div>
+              <button onclick="finishBaking(3, 'Opera Sponge Base (6 loyang)')" class="w-full py-2 rounded-xl text-xs font-bold bg-white border border-hairline text-espresso hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition flex items-center justify-center gap-1.5">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Selesai & Kurangi Bahan BOM</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KITCHEN PRODUCTION QUEUE -->
+          <div class="luxury-card p-5 rounded-2xl space-y-4">
+            <h3 class="font-serif font-bold text-base text-espresso">Antrean Pesanan Dapur & Custom Cake</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-hairline text-stone-400 font-bold uppercase tracking-wider">
+                    <th class="pb-2">No. Pesanan</th>
+                    <th class="pb-2">Item Kue / Detail Custom</th>
+                    <th class="pb-2">Target Selesai</th>
+                    <th class="pb-2">Status Dapur</th>
+                    <th class="pb-2 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-hairline" id="kitchen-queue-table">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 4: RAW MATERIAL INVENTORY (BOM & FEFO) -->
+        <section id="panel-inventory" class="hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="font-serif font-bold text-2xl text-espresso">Inventaris Bahan Baku & FEFO</h2>
+              <p class="text-xs text-stone-500">Pengurangan otomatis dari Bill of Materials (BOM) & peringatan kadaluarsa</p>
+            </div>
+            <button onclick="openRestockModal()" class="px-4 py-2 rounded-xl bg-espresso text-white text-xs font-bold hover:bg-stone-800 transition flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4 text-goldlight"></i>
+              <span>+ Tambah Stok Bahan</span>
+            </button>
+          </div>
+
+          <div class="luxury-card rounded-2xl overflow-hidden">
+            <div class="p-4 border-b border-hairline flex items-center justify-between">
+              <div class="text-xs font-bold text-stone-500">Daftar Bahan Baku Utama D'Bai Cui</div>
+              <span class="text-xs font-mono text-stone-400">Total: 8 Bahan Kritis</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="bg-ivory/50 border-b border-hairline text-stone-400 font-bold uppercase tracking-wider">
+                    <th class="p-3">Nama Bahan</th>
+                    <th class="p-3">Kategori</th>
+                    <th class="p-3">Stok Saat Ini</th>
+                    <th class="p-3">Batas Minimum</th>
+                    <th class="p-3">Kadaluarsa (FEFO)</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-hairline" id="inventory-table-body">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: CUSTOMER PORTAL & ORDER TRACKING -->
+        <section id="panel-customer-portal" class="hidden space-y-6">
+          <div class="luxury-card p-6 rounded-2xl bg-gradient-to-r from-espresso to-stone-800 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span class="px-2.5 py-1 rounded-full bg-gold/20 text-goldlight text-[10px] font-mono font-bold uppercase tracking-wider">VIP Membership</span>
+              <h2 class="font-serif font-bold text-2xl mt-2 text-white">Selamat Datang, Ibu Jessica Tan</h2>
+              <p class="text-xs text-stone-300 mt-1">Status: Platinum Member • Diskon Otomatis 10% di Seluruh Menu</p>
+            </div>
+            <div class="flex items-center gap-4 bg-white/10 p-3 rounded-2xl backdrop-blur-sm border border-white/10">
+              <div>
+                <div class="text-[10px] text-stone-300 uppercase font-bold">Poin D'Bai Club</div>
+                <div class="font-mono font-extrabold text-xl text-goldlight">1.450 Poin</div>
+              </div>
+              <button class="px-3 py-1.5 rounded-xl bg-gold text-espresso font-bold text-xs hover:bg-goldlight transition">Tukar Reward</button>
+            </div>
+          </div>
+
+          <!-- LIVE ORDER TRACKING TIMELINE -->
+          <div class="luxury-card p-5 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-serif font-bold text-base text-espresso">Status Pesanan Terakhir</h3>
+                <p class="text-xs text-stone-500">No. Pesanan: <span class="font-mono font-bold text-espresso">DBC-20261109-004</span> (Custom Birthday Opera Cake)</p>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-amber-50 text-gold text-xs font-mono font-bold border border-gold/30">Sedang Didekorasi</span>
+            </div>
+
+            <!-- 5-STAGE TIMELINE -->
+            <div class="grid grid-cols-5 gap-2 pt-3">
+              <div class="text-center space-y-1.5">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto text-xs font-bold">✓</div>
+                <div class="text-[11px] font-bold text-espresso">Diterima</div>
+                <div class="text-[10px] text-stone-400 font-mono">10:15 WIB</div>
+              </div>
+              <div class="text-center space-y-1.5">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto text-xs font-bold">✓</div>
+                <div class="text-[11px] font-bold text-espresso">Antrean Dapur</div>
+                <div class="text-[10px] text-stone-400 font-mono">10:30 WIB</div>
+              </div>
+              <div class="text-center space-y-1.5">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center mx-auto text-xs font-bold">✓</div>
+                <div class="text-[11px] font-bold text-espresso">Dipanggang</div>
+                <div class="text-[10px] text-stone-400 font-mono">11:00 WIB</div>
+              </div>
+              <div class="text-center space-y-1.5">
+                <div class="w-8 h-8 rounded-full bg-gold text-espresso flex items-center justify-center mx-auto text-xs font-bold animate-pulse">4</div>
+                <div class="text-[11px] font-bold text-gold">Dekorasi Ucapan</div>
+                <div class="text-[10px] text-stone-400 font-mono">Proses</div>
+              </div>
+              <div class="text-center space-y-1.5 opacity-40">
+                <div class="w-8 h-8 rounded-full bg-stone-300 text-stone-600 flex items-center justify-center mx-auto text-xs font-bold">5</div>
+                <div class="text-[11px] font-bold text-stone-500">Siap Ambil</div>
+                <div class="text-[10px] text-stone-400 font-mono">Est 13:00</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- MOBILE DEVICE SIMULATOR WRAPPER (HIDDEN BY DEFAULT) -->
+    <div id="mobile-simulator-suite" class="hidden flex-1 w-full bg-stone-900 py-6 px-4 flex flex-col items-center justify-start overflow-y-auto">
+      
+      <!-- Top Simulator Controls -->
+      <div class="w-full max-w-2xl bg-stone-800/80 backdrop-blur-md p-3 rounded-2xl border border-stone-700 flex items-center justify-between mb-4 text-xs text-white">
+        <div class="flex items-center gap-2">
+          <span class="text-stone-400 font-bold">Frame:</span>
+          <button onclick="setMobileFrame('iphone')" id="frame-btn-iphone" class="px-3 py-1 rounded-lg bg-velvet text-white font-bold transition">iPhone 15 Pro</button>
+          <button onclick="setMobileFrame('android')" id="frame-btn-android" class="px-3 py-1 rounded-lg bg-stone-700 text-stone-300 font-bold transition">Android M3</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-[11px] font-mono text-stone-300">Flutter Mobile App v1.0.0</span>
+        </div>
+      </div>
+
+      <!-- DEVICE FRAME -->
+      <div id="mobile-device-container" class="iphone-frame flex flex-col">
+        <!-- Dynamic Island / Punch Hole -->
+        <div id="mobile-notch" class="dynamic-island">
+          <span class="w-2.5 h-2.5 rounded-full bg-stone-800 border border-stone-700"></span>
+        </div>
+
+        <!-- Phone Top Status Bar -->
+        <div class="pt-3 px-6 pb-1 flex justify-between items-center text-[11px] font-mono font-bold text-espresso shrink-0 z-20">
+          <span id="mobile-clock">09:41</span>
+          <div class="flex items-center gap-1.5 text-espresso">
+            <i data-lucide="signal" class="w-3 h-3"></i>
+            <i data-lucide="wifi" class="w-3 h-3"></i>
+            <i data-lucide="battery" class="w-3 h-3"></i>
+          </div>
+        </div>
+
+        <!-- Mobile Scrollable Screen Content -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-20" id="mobile-screen-content">
+          <!-- Injected via JS -->
+        </div>
+
+        <!-- Phone Bottom Tab Bar (Commercial 5-Tab Standards) -->
+        <div class="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-hairline px-4 py-2 flex justify-between items-center z-30">
+          <button onclick="switchMobileTab('home')" id="mtab-home" class="flex flex-col items-center gap-0.5 text-velvet">
+            <i data-lucide="home" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold">Home</span>
+          </button>
+          <button onclick="switchMobileTab('catalog')" id="mtab-catalog" class="flex flex-col items-center gap-0.5 text-stone-400 hover:text-espresso">
+            <i data-lucide="cake" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold">Katalog</span>
+          </button>
+          <button onclick="switchMobileTab('oven')" id="mtab-oven" class="flex flex-col items-center gap-0.5 text-stone-400 hover:text-espresso">
+            <i data-lucide="flame" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold">Oven KDS</span>
+          </button>
+          <button onclick="switchMobileTab('profile')" id="mtab-profile" class="flex flex-col items-center gap-0.5 text-stone-400 hover:text-espresso">
+            <i data-lucide="user" class="w-5 h-5"></i>
+            <span class="text-[9px] font-bold">Profile</span>
+          </button>
+        </div>
+
+        <!-- iOS Home Bar Indicator -->
+        <div id="mobile-home-bar" class="w-32 h-1 bg-stone-900/60 rounded-full absolute bottom-1.5 left-1/2 -translate-x-1/2 z-40"></div>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL: CUSTOM CAKE ORDER TAKER -->
+  <div id="modal-custom-cake" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="luxury-card bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="cake" class="w-5 h-5 text-velvet"></i>
+          <h3 class="font-serif font-bold text-lg text-espresso">Custom Birthday & Event Cake</h3>
+        </div>
+        <button onclick="closeCustomCakeModal()" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-stone-600 block mb-1">Pilih Basis Kue (Cake Base)</label>
+          <select id="custom-base" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 font-bold text-espresso">
+            <option value="Signature Opera Cake 20cm" data-price="385000">Signature Opera Cake (Almond Joconde + Espresso) — Rp 385.000</option>
+            <option value="Valrhona Dark Chocolate Ganache 20cm" data-price="420000">Valrhona Chocolate Ganache 20cm — Rp 420.000</option>
+            <option value="Vanilla Bean Strawberry Shortcake 18cm" data-price="360000">Vanilla Strawberry Shortcake 18cm — Rp 360.000</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="font-bold text-stone-600 block mb-1">Tulisan Ucapan di Atas Coklat Plakat (Maks. 45 Karakter)</label>
+          <input type="text" id="custom-message" maxlength="45" placeholder="Contoh: Happy 30th Birthday Dearest Jessica! 🎉" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 text-xs text-espresso focus:outline-none focus:ring-1 focus:ring-velvet" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-stone-600 block mb-1">Pilihan Lilin</label>
+            <select id="custom-candle" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 text-xs font-bold">
+              <option value="Gold Spiral (Gratis)">Lilin Gold Spiral (Gratis)</option>
+              <option value="Angka Emas 2 Digit (+Rp 15.000)">Lilin Angka Emas (+Rp 15.000)</option>
+              <option value="Kembang Api Sparkling (+Rp 25.000)">Sparkling Candle (+Rp 25.000)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-stone-600 block mb-1">Jadwal Pengambilan (Slot Jam)</label>
+            <input type="time" id="custom-pickup" value="16:00" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 text-xs font-bold" />
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-hairline flex items-center justify-end gap-2">
+        <button onclick="closeCustomCakeModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-stone-500 hover:bg-stone-100">Batal</button>
+        <button onclick="submitCustomCake()" class="px-5 py-2.5 rounded-xl bg-velvet text-white text-xs font-bold hover:bg-rose-900 shadow-md transition">Tambahkan ke Keranjang POS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THERMAL RECEIPT PRINT PREVIEW (58mm / 80mm ESC/POS) -->
+  <div id="modal-receipt" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-hairline pb-2 no-print">
+        <div class="flex items-center gap-2">
+          <i data-lucide="printer" class="w-4 h-4 text-emerald-600"></i>
+          <h3 class="font-bold text-xs uppercase tracking-wider text-stone-600">Struk Kasir Siap Cetak</h3>
+        </div>
+        <button onclick="closeReceiptModal()" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <!-- THERMAL RECEIPT CONTAINER (STRICTLY BORDERLESS, ZERO GRAYSCALE) -->
+      <div id="thermal-receipt-area" class="bg-white text-black p-4 font-mono text-xs leading-tight select-none">
+        <div class="text-center space-y-1">
+          <div class="font-extrabold text-sm uppercase">D'BAI CUI ARTISAN BAKERY</div>
+          <div class="text-[10px]">Jl. Senopati No. 42, Kebayoran Baru, Jaksel</div>
+          <div class="text-[10px]">Telp: 021-7281938 • NPWP: 82.193.847.2-012</div>
+          <div>--------------------------------</div>
+        </div>
+
+        <div class="text-[10px] space-y-0.5 my-2">
+          <div class="flex justify-between"><span>No:</span><span id="receipt-id" class="font-bold">DBC-20261109-0129</span></div>
+          <div class="flex justify-between"><span>Tgl:</span><span id="receipt-date">09/11/2026 12:45 WIB</span></div>
+          <div class="flex justify-between"><span>Kasir:</span><span id="receipt-cashier">Siti Rahma (POS-01)</span></div>
+          <div class="flex justify-between"><span>Pelanggan:</span><span id="receipt-customer">Jessica Tan (Gold VIP)</span></div>
+          <div>--------------------------------</div>
+        </div>
+
+        <!-- Line items -->
+        <div id="receipt-items" class="space-y-1 text-[10px]">
+          <!-- Injected via JS -->
+        </div>
+
+        <div class="my-2">--------------------------------</div>
+
+        <div class="space-y-0.5 text-[10px]">
+          <div class="flex justify-between"><span>Subtotal:</span><span id="receipt-subtotal">Rp 235.000</span></div>
+          <div class="flex justify-between"><span>Diskon Member:</span><span id="receipt-discount">- Rp 23.500</span></div>
+          <div class="flex justify-between"><span>PPN 10%:</span><span id="receipt-tax">Rp 21.150</span></div>
+          <div class="flex justify-between font-extrabold text-xs pt-1 border-t border-black">
+            <span>TOTAL:</span><span id="receipt-total">Rp 232.650</span>
+          </div>
+          <div class="flex justify-between pt-1"><span>Metode Bayar:</span><span id="receipt-method" class="font-bold">QRIS BCA (LUNAS)</span></div>
+        </div>
+
+        <div class="text-center mt-3 pt-2 text-[9px] space-y-1">
+          <div>--------------------------------</div>
+          <div class="font-bold">TERIMA KASIH ATAS KUNJUNGAN ANDA!</div>
+          <div>Simpan struk ini untuk penukaran poin.</div>
+          <div>Instagram: @dbaicui.bakery</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 flex flex-col gap-2 no-print">
+        <button onclick="window.print()" class="w-full py-2.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-stone-800 transition flex items-center justify-center gap-2">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Cetak Thermal Printer (58mm/80mm)</span>
+        </button>
+        <button onclick="shareWhatsAppReceipt()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          <span>Kirim E-Receipt via WhatsApp</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION ENGINE -->
+  <script>
+    // 1. DATA SEEDING (ARTISAN BAKERY MENU & RAW MATERIALS)
+    const DEFAULT_PRODUCTS = [
+      { id: 'p1', name: 'Almond Croissant', category: 'Viennoiserie', price: 38000, cogs: 14000, stock: 18, emoji: '🥐', desc: 'Butter laminasi Anchor, almond frangipane & toasted flakes' },
+      { id: 'p2', name: 'Pain au Chocolat', category: 'Viennoiserie', price: 35000, cogs: 13000, stock: 24, emoji: '🍫', desc: 'Double stick coklat Valrhona 55% dark' },
+      { id: 'p3', name: 'Signature Opera Cake', category: 'Whole Cake', price: 385000, cogs: 145000, stock: 6, emoji: '🎂', desc: '6 lapis almond joconde, kopi espresso & chocolate glaze' },
+      { id: 'p4', name: 'Strawberry Shortcake', category: 'Whole Cake', price: 360000, cogs: 130000, stock: 4, emoji: '🍓', desc: 'Japanese sponge, fresh strawberry Ciwidey & chantilly cream' },
+      { id: 'p5', name: 'Country Sourdough Loaf', category: 'Sourdough', price: 48000, cogs: 12000, stock: 14, emoji: '🍞', desc: 'Fermentasi liar 36 jam, crust renyah berpori terbuka' },
+      { id: 'p6', name: 'Choux Craquelin Trio', category: 'Pastry', price: 42000, cogs: 15000, stock: 16, emoji: '🧁', desc: 'Vanilla Bourbon, Chocolate Ganache, Salted Caramel' },
+      { id: 'p7', name: 'French Macaron Box 6', category: 'Pastry', price: 95000, cogs: 35000, stock: 12, emoji: '🍬', desc: 'Pistachio, Raspberry, Dark Choco, Coffee, Lemon, Caramel' },
+      { id: 'p8', name: 'Brioche Feuilletee', category: 'Viennoiserie', price: 32000, cogs: 11000, stock: 15, emoji: '🥯', desc: 'Roti mentega berlapis gula mutiara caramel' }
+    ];
+
+    const DEFAULT_INGREDIENTS = [
+      { id: 'i1', name: 'Tepung Cakra Kembar Emas', category: 'Flour', stock: 45, unit: 'kg', min: 20, exp: '15/12/2026', status: 'Aman' },
+      { id: 'i2', name: 'Butter Anchor Unsalted 82%', category: 'Dairy', stock: 12, unit: 'kg', min: 15, exp: '20/11/2026', status: 'Menipis' },
+      { id: 'i3', name: 'Valrhona Dark Chocolate 70%', category: 'Chocolate', stock: 8, unit: 'kg', min: 10, exp: '10/01/2027', status: 'Menipis' },
+      { id: 'i4', name: 'Telur Ayam Omega Grade A', category: 'Egg', stock: 85, unit: 'butir', min: 40, exp: '18/11/2026', status: 'Aman' },
+      { id: 'i5', name: 'Almond Powder California', category: 'Nuts', stock: 18, unit: 'kg', min: 8, exp: '05/02/2027', status: 'Aman' },
+      { id: 'i6', name: 'Fresh Cream Elle & Vire 35%', category: 'Dairy', stock: 22, unit: 'liter', min: 12, exp: '25/11/2026', status: 'Aman' }
+    ];
+
+    // Reactive State
+    let products = JSON.parse(localStorage.getItem('dbaicui_products')) || DEFAULT_PRODUCTS;
+    let ingredients = JSON.parse(localStorage.getItem('dbaicui_ingredients')) || DEFAULT_INGREDIENTS;
+    let cart = [];
+    let currentRole = 'owner';
+    let currentCategory = 'Semua';
+    let isMobileView = false;
+    let currentMobileTab = 'home';
+    let lastTransaction = null;
+
+    // 2. INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      initClock();
+      renderPosCatalog();
+      renderTopProducts();
+      renderKitchenQueue();
+      renderInventoryTable();
+      initSalesChart();
+      updateCartCalculations();
+      lucide.createIcons();
+    });
+
+    function initClock() {
+      setInterval(() => {
+        const now = new Date();
+        const str = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+        const el = document.getElementById('pos-clock');
+        const mEl = document.getElementById('mobile-clock');
+        if (el) el.innerText = str;
+        if (mEl) mEl.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      }, 1000);
+    }
+
+    // 3. ROLE SWITCHING (RBAC SIMULATION)
+    function setRole(role) {
+      currentRole = role;
+      ['owner', 'manager', 'cashier', 'customer'].forEach(r => {
+        const btn = document.getElementById(`role-btn-${r}`);
+        if (btn) {
+          if (r === role) {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white text-espresso shadow-sm border border-hairline';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-stone-600 hover:text-espresso';
+          }
+        }
+      });
+
+      const opIcon = document.getElementById('operator-icon');
+      const opName = document.getElementById('operator-name');
+      const opBadge = document.getElementById('operator-badge');
+
+      if (role === 'owner') {
+        opIcon.innerText = '👑';
+        opName.innerText = 'Bapak Hendra (Owner)';
+        opBadge.innerText = 'Akses Penuh Superadmin & Laba';
+        switchTab('dashboard');
+      } else if (role === 'manager') {
+        opIcon.innerText = '👨‍🍳';
+        opName.innerText = 'Chef Pierre (Head Baker)';
+        opBadge.innerText = 'Dapur, Resep BOM & Oven KDS';
+        switchTab('kitchen');
+      } else if (role === 'cashier') {
+        opIcon.innerText = '🏷️';
+        opName.innerText = 'Siti Rahma (Kasir POS)';
+        opBadge.innerText = 'Front-Desk Kasir & Cetak Struk';
+        switchTab('pos');
+      } else if (role === 'customer') {
+        opIcon.innerText = '👤';
+        opName.innerText = 'Jessica Tan (Platinum VIP)';
+        opBadge.innerText = 'Katalog & Live Order Tracking';
+        switchTab('customer-portal');
+      }
+    }
+
+    // 4. TAB NAVIGATION
+    function switchTab(tabId) {
+      ['dashboard', 'pos', 'kitchen', 'inventory', 'customer-portal'].forEach(t => {
+        const panel = document.getElementById(`panel-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (panel) panel.classList.add('hidden');
+        if (nav) {
+          nav.className = 'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition text-stone-600 hover:bg-ivory hover:text-espresso';
+        }
+      });
+
+      const activePanel = document.getElementById(`panel-${tabId}`);
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+      if (activeNav) {
+        activeNav.className = 'w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition bg-velvet text-white shadow-sm shadow-velvet/20';
+      }
+      lucide.createIcons();
+    }
+
+    // 5. POS CATALOG RENDERING
+    function renderPosCatalog() {
+      const search = (document.getElementById('pos-search')?.value || '').toLowerCase();
+      const grid = document.getElementById('pos-catalog-grid');
+      const chips = document.getElementById('category-chips');
+      if (!grid) return;
+
+      const categories = ['Semua', 'Viennoiserie', 'Whole Cake', 'Pastry', 'Sourdough'];
+      if (chips) {
+        chips.innerHTML = categories.map(cat => `
+          <button onclick="filterCategory('${cat}')" class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${currentCategory === cat ? 'bg-velvet text-white shadow-sm' : 'bg-white text-stone-600 border border-hairline hover:bg-stone-50'}">
+            ${cat}
+          </button>
+        `).join('');
+      }
+
+      const filtered = products.filter(p => {
+        const matchCat = currentCategory === 'Semua' || p.category === currentCategory;
+        const matchSearch = p.name.toLowerCase().includes(search) || p.desc.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      });
+
+      grid.innerHTML = filtered.map(item => `
+        <div class="luxury-card rounded-2xl p-3.5 flex flex-col justify-between min-h-[225px] hover:border-gold/50 transition group">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-3xl">${item.emoji}</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${item.stock <= 5 ? 'bg-red-50 text-red-600 font-bold' : 'bg-stone-100 text-stone-500'}">
+                Stok: ${item.stock}
+              </span>
+            </div>
+            <h4 class="font-serif font-bold text-sm text-espresso mt-2.5 group-hover:text-velvet transition">${item.name}</h4>
+            <p class="text-[11px] text-stone-400 line-clamp-2 mt-1 leading-snug">${item.desc}</p>
+          </div>
+
+          <div class="mt-auto pt-3 border-t border-hairline/60 flex items-center justify-between">
+            <div class="font-mono font-extrabold text-xs text-espresso">
+              Rp ${item.price.toLocaleString('id-ID')}
+            </div>
+            <button onclick="addToCart('${item.id}')" class="w-8 h-8 rounded-xl bg-ivory hover:bg-velvet hover:text-white text-espresso flex items-center justify-center transition shadow-sm border border-hairline">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      renderPosCatalog();
+    }
+
+    // 6. CART & CHECKOUT ENGINE
+    function addToCart(productId) {
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+      const existing = cart.find(c => c.id === productId);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ ...prod, qty: 1 });
+      }
+      updateCartCalculations();
+    }
+
+    function changeCartQty(id, delta) {
+      const idx = cart.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        cart[idx].qty += delta;
+        if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      }
+      updateCartCalculations();
+    }
+
+    function clearCart() {
+      cart = [];
+      updateCartCalculations();
+    }
+
+    function updateCartCalculations() {
+      const container = document.getElementById('cart-items-container');
+      const badge = document.getElementById('badge-cart-count');
+      const subtotalEl = document.getElementById('cart-subtotal');
+      const discountEl = document.getElementById('cart-discount');
+      const discountLabel = document.getElementById('cart-discount-label');
+      const taxEl = document.getElementById('cart-tax');
+      const totalEl = document.getElementById('cart-total');
+      const checkoutBtn = document.getElementById('btn-checkout');
+
+      const totalItems = cart.reduce((acc, c) => acc + c.qty, 0);
+      if (badge) {
+        badge.innerText = totalItems;
+        badge.classList.toggle('hidden', totalItems === 0);
+      }
+
+      if (!container) return;
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="py-10 text-center text-stone-400 space-y-1">
+            <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto opacity-30"></i>
+            <p class="text-xs">Keranjang masih kosong</p>
+            <p class="text-[10px]">Pilih kue dari katalog di sebelah kiri</p>
+          </div>
+        `;
+        if (subtotalEl) subtotalEl.innerText = 'Rp 0';
+        if (discountEl) discountEl.innerText = '- Rp 0';
+        if (taxEl) taxEl.innerText = 'Rp 0';
+        if (totalEl) totalEl.innerText = 'Rp 0';
+        if (checkoutBtn) checkoutBtn.disabled = true;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = cart.map(item => `
+        <div class="py-2.5 flex items-center justify-between text-xs">
+          <div class="space-y-0.5 max-w-[150px]">
+            <div class="font-bold text-espresso truncate">${item.name}</div>
+            <div class="text-[10px] text-stone-400 font-mono">@ Rp ${item.price.toLocaleString('id-ID')}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex items-center bg-ivory rounded-lg border border-hairline">
+              <button onclick="changeCartQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-red-600">-</button>
+              <span class="w-6 text-center font-mono font-bold">${item.qty}</span>
+              <button onclick="changeCartQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-emerald-600">+</button>
+            </div>
+            <div class="font-mono font-bold text-espresso w-20 text-right">
+              Rp ${(item.price * item.qty).toLocaleString('id-ID')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      const subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
+      const custSelect = document.getElementById('cart-customer-select')?.value || 'gold';
+      let discountRate = 0;
+      if (custSelect === 'gold') discountRate = 0.10;
+      if (custSelect === 'silver') discountRate = 0.05;
+
+      const discount = Math.round(subtotal * discountRate);
+      const tax = Math.round((subtotal - discount) * 0.10);
+      const total = subtotal - discount + tax;
+
+      if (subtotalEl) subtotalEl.innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
+      if (discountEl) discountEl.innerText = `- Rp ${discount.toLocaleString('id-ID')}`;
+      if (discountLabel) discountLabel.innerText = `Diskon Member (${discountRate * 100}%)`;
+      if (taxEl) taxEl.innerText = `Rp ${tax.toLocaleString('id-ID')}`;
+      if (totalEl) totalEl.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+      if (checkoutBtn) checkoutBtn.disabled = false;
+      lucide.createIcons();
+    }
+
+    function quickPay(method) {
+      if (cart.length === 0) return;
+      openPaymentModal(method);
+    }
+
+    function setCashAmount(amt) {
+      if (cart.length === 0) return;
+      alert(`Pembayaran Tunai Rp ${amt.toLocaleString('id-ID')} diterima. Menghitung kembalian...`);
+      openPaymentModal('cash', amt);
+    }
+
+    function openPaymentModal(method = 'qris', cashTender = null) {
+      if (cart.length === 0) return;
+      const subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
+      const custSelect = document.getElementById('cart-customer-select')?.value || 'gold';
+      let discountRate = custSelect === 'gold' ? 0.10 : (custSelect === 'silver' ? 0.05 : 0);
+      const discount = Math.round(subtotal * discountRate);
+      const tax = Math.round((subtotal - discount) * 0.10);
+      const total = subtotal - discount + tax;
+
+      lastTransaction = {
+        id: 'DBC-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900),
+        date: new Date().toLocaleString('id-ID'),
+        customer: custSelect === 'gold' ? 'Jessica Tan (Gold VIP)' : (custSelect === 'silver' ? 'Andi Wijaya (Silver)' : 'Walk-in Customer'),
+        cashier: 'Siti Rahma (POS-01)',
+        items: [...cart],
+        subtotal,
+        discount,
+        tax,
+        total,
+        method: method === 'qris' ? 'QRIS BCA (LUNAS)' : (method === 'exact' ? 'Tunai Uang Pas' : (method === 'edc' ? 'EDC Mandiri Debit' : `Tunai Rp ${cashTender?.toLocaleString('id-ID')}`))
+      };
+
+      // Populate thermal receipt area
+      document.getElementById('receipt-id').innerText = lastTransaction.id;
+      document.getElementById('receipt-date').innerText = lastTransaction.date;
+      document.getElementById('receipt-customer').innerText = lastTransaction.customer;
+      document.getElementById('receipt-subtotal').innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-discount').innerText = `- Rp ${discount.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-tax').innerText = `Rp ${tax.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-method').innerText = lastTransaction.method;
+
+      const itemsEl = document.getElementById('receipt-items');
+      itemsEl.innerHTML = lastTransaction.items.map(it => `
+        <div class="flex justify-between">
+          <span>${it.qty}x ${it.name}</span>
+          <span class="font-bold">Rp ${(it.price * it.qty).toLocaleString('id-ID')}</span>
+        </div>
+      `).join('');
+
+      // Open Modal
+      document.getElementById('modal-receipt').classList.remove('hidden');
+      
+      // Auto Deduct Product Etalase Stock
+      lastTransaction.items.forEach(c => {
+        const p = products.find(prod => prod.id === c.id);
+        if (p) p.stock = Math.max(0, p.stock - c.qty);
+      });
+      localStorage.setItem('dbaicui_products', JSON.stringify(products));
+      renderPosCatalog();
+
+      // Clear cart
+      cart = [];
+      updateCartCalculations();
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('modal-receipt').classList.add('hidden');
+    }
+
+    function shareWhatsAppReceipt() {
+      if (!lastTransaction) return;
+      const text = `*D'BAI CUI ARTISAN BAKERY*%0ANo: ${lastTransaction.id}%0APelanggan: ${lastTransaction.customer}%0ATotal: Rp ${lastTransaction.total.toLocaleString('id-ID')}%0AStatus: LUNAS (${lastTransaction.method})%0ATerima kasih atas kunjungan Anda!`;
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    // 7. CUSTOM CAKE ORDER
+    function openCustomCakeModal() {
+      document.getElementById('modal-custom-cake').classList.remove('hidden');
+    }
+    function closeCustomCakeModal() {
+      document.getElementById('modal-custom-cake').classList.add('hidden');
+    }
+    function submitCustomCake() {
+      const select = document.getElementById('custom-base');
+      const baseName = select.value;
+      const price = parseInt(select.options[select.selectedIndex].getAttribute('data-price') || '385000');
+      const msg = document.getElementById('custom-message').value || 'Happy Celebration! 🎉';
+      const candle = document.getElementById('custom-candle').value;
+      const pickup = document.getElementById('custom-pickup').value;
+
+      cart.push({
+        id: 'custom-' + Date.now(),
+        name: `Custom Cake: ${baseName}`,
+        category: 'Custom Cake',
+        price: price + (candle.includes('15.000') ? 15000 : (candle.includes('25.000') ? 25000 : 0)),
+        cogs: 145000,
+        qty: 1,
+        desc: `Ucapan: "${msg}" • Lilin: ${candle} • Ambil: ${pickup} WIB`
+      });
+
+      closeCustomCakeModal();
+      updateCartCalculations();
+      alert('Custom Cake berhasil ditambahkan ke keranjang pesanan!');
+    }
+
+    // 8. OVEN KDS & BOM DEDUCTION
+    function finishBaking(ovenId, batchName) {
+      alert(`Batch ${batchName} pada Oven #${ovenId} SELESAI!\nSistem otomatis memotong stok bahan baku (BOM) Tepung Cakra Kembar & Butter Anchor.`);
+      
+      // Auto Deduct Ingredients (BOM Calculation)
+      const flour = ingredients.find(i => i.id === 'i1');
+      const butter = ingredients.find(i => i.id === 'i2');
+      if (flour) flour.stock = Math.max(0, flour.stock - 2.5);
+      if (butter) butter.stock = Math.max(0, butter.stock - 1.2);
+
+      localStorage.setItem('dbaicui_ingredients', JSON.stringify(ingredients));
+      renderInventoryTable();
+    }
+
+    function renderKitchenQueue() {
+      const tbody = document.getElementById('kitchen-queue-table');
+      if (!tbody) return;
+      const queues = [
+        { id: 'KDS-081', item: 'Signature Opera Cake 20cm (Ucapan: Happy Bday Jessica)', time: '13:00 WIB', status: 'Baking', badge: 'bg-amber-50 text-gold' },
+        { id: 'KDS-082', item: 'Country Sourdough Loaf (Batch 12 pcs)', time: '13:15 WIB', status: 'Proofing', badge: 'bg-blue-50 text-blue-600' },
+        { id: 'KDS-083', item: 'Valrhona Choco Ganache (Ucapan: Happy Anniversary)', time: '14:30 WIB', status: 'Adonan Siap', badge: 'bg-stone-100 text-stone-600' }
+      ];
+
+      tbody.innerHTML = queues.map(q => `
+        <tr class="hover:bg-ivory/50">
+          <td class="py-2.5 font-mono font-bold text-espresso">${q.id}</td>
+          <td class="py-2.5 font-medium text-stone-700">${q.item}</td>
+          <td class="py-2.5 font-mono text-stone-500">${q.time}</td>
+          <td class="py-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${q.badge}">${q.status}</span></td>
+          <td class="py-2.5 text-right">
+            <button onclick="alert('Pesanan ${q.id} diperbarui!')" class="px-2.5 py-1 rounded-lg bg-ivory hover:bg-stone-200 border border-hairline text-stone-600 font-bold text-[11px]">Update</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // 9. INVENTORY & FEFO TABLE
+    function renderInventoryTable() {
+      const tbody = document.getElementById('inventory-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = ingredients.map(ing => `
+        <tr class="hover:bg-ivory/50">
+          <td class="p-3 font-bold text-espresso">${ing.name}</td>
+          <td class="p-3 text-stone-500">${ing.category}</td>
+          <td class="p-3 font-mono font-extrabold ${ing.stock <= ing.min ? 'text-red-600' : 'text-espresso'}">${ing.stock} ${ing.unit}</td>
+          <td class="p-3 font-mono text-stone-400">${ing.min} ${ing.unit}</td>
+          <td class="p-3 font-mono text-stone-600">${ing.exp}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${ing.stock <= ing.min ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-emerald-50 text-emerald-600'}">
+              ${ing.stock <= ing.min ? '⚠️ Stok Menipis' : '✓ Aman'}
+            </span>
+          </td>
+          <td class="p-3 text-right">
+            <button onclick="restockItem('${ing.id}')" class="px-2.5 py-1 rounded-lg bg-white border border-hairline text-espresso hover:bg-stone-50 font-bold text-[11px]">
+              + Restock
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function restockItem(id) {
+      const ing = ingredients.find(i => i.id === id);
+      if (ing) {
+        ing.stock += 10;
+        localStorage.setItem('dbaicui_ingredients', JSON.stringify(ingredients));
+        renderInventoryTable();
+        alert(`Berhasil restock +10 ${ing.unit} untuk ${ing.name}`);
+      }
+    }
+
+    function openRestockModal() {
+      const name = prompt('Nama Bahan Baru (contoh: Strawberry Ciwidey):');
+      if (name) {
+        ingredients.push({
+          id: 'i-' + Date.now(),
+          name,
+          category: 'Fresh Fruit',
+          stock: 10,
+          unit: 'kg',
+          min: 5,
+          exp: '14/11/2026',
+          status: 'Aman'
+        });
+        localStorage.setItem('dbaicui_ingredients', JSON.stringify(ingredients));
+        renderInventoryTable();
+      }
+    }
+
+    // 10. TOP PRODUCTS LIST & CHARTS
+    function renderTopProducts() {
+      const list = document.getElementById('top-products-list');
+      if (!list) return;
+      const topItems = [
+        { name: 'Almond Croissant', sales: '48 pcs', rev: 'Rp 1.824.000', pct: '88%' },
+        { name: 'Signature Opera Cake', sales: '8 loyang', rev: 'Rp 3.080.000', pct: '75%' },
+        { name: 'Pain au Chocolat', sales: '36 pcs', rev: 'Rp 1.260.000', pct: '62%' },
+        { name: 'Country Sourdough Loaf', sales: '22 loaf', rev: 'Rp 1.056.000', pct: '50%' }
+      ];
+
+      list.innerHTML = topItems.map(it => `
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="font-bold text-espresso">${it.name}</span>
+            <span class="font-mono text-stone-500">${it.sales} (${it.rev})</span>
+          </div>
+          <div class="w-full bg-stone-100 rounded-full h-1.5">
+            <div class="bg-velvet h-1.5 rounded-full" style="width: ${it.pct}"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function initSalesChart() {
+      const ctx = document.getElementById('salesChart');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+          datasets: [
+            {
+              label: 'Omzet Penjualan (Juta Rp)',
+              data: [11.2, 12.5, 10.8, 13.4, 16.8, 22.4, 14.85],
+              backgroundColor: '#881337',
+              borderRadius: 8
+            },
+            {
+              label: 'HPP Bahan Baku / BOM (Juta Rp)',
+              data: [4.2, 4.8, 4.1, 5.1, 6.4, 8.5, 5.6],
+              backgroundColor: '#D97706',
+              borderRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: {
+            y: { grid: { color: '#E7E1D8' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // 11. HARDWARE & BACKUP CONTROLS
+    function openCashDrawer() {
+      // Audio ding synthesizer using Web Audio API
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // High pleasant ding
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      } catch (e) {}
+      alert('🔔 LACI KASIR (CASH DRAWER) TERBUKA!\nPerintah ESC/POS: [0x1B, 0x70, 0x00, 0x19, 0xFA] dikirim ke printer 80mm.');
+    }
+
+    function openPinModal() {
+      const pin = prompt('Masukkan 4-Digit PIN Kasir untuk Buka Kunci (Default: 1234):');
+      if (pin === '1234') {
+        alert('✓ Kunci terminal dibuka dengan PIN Operator Valid!');
+      } else if (pin !== null) {
+        alert('❌ PIN Salah! Silakan coba lagi (Gunakan: 1234).');
+      }
+    }
+
+    function resetDataDefault() {
+      if (confirm('Reset seluruh data etalase dan bahan baku ke setelan awal?')) {
+        localStorage.removeItem('dbaicui_products');
+        localStorage.removeItem('dbaicui_ingredients');
+        products = [...DEFAULT_PRODUCTS];
+        ingredients = [...DEFAULT_INGREDIENTS];
+        renderPosCatalog();
+        renderInventoryTable();
+        alert('Data berhasil di-reset!');
+      }
+    }
+
+    function exportJSONBackup() {
+      const payload = { products, ingredients, exportDate: new Date().toISOString() };
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = `dbaicui-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    // 12. MOBILE SIMULATOR ENGINE (5 COMMERCIAL SCREENS)
+    function toggleViewMode() {
+      isMobileView = !isMobileView;
+      const desk = document.getElementById('desktop-suite');
+      const mob = document.getElementById('mobile-simulator-suite');
+      const lbl = document.getElementById('view-mode-label');
+
+      if (isMobileView) {
+        desk.classList.add('hidden');
+        mob.classList.remove('hidden');
+        lbl.innerText = 'Desktop Web Suite';
+        renderMobileContent();
+      } else {
+        desk.classList.remove('hidden');
+        mob.classList.add('hidden');
+        lbl.innerText = 'Simulator Mobile';
+      }
+      lucide.createIcons();
+    }
+
+    function setMobileFrame(type) {
+      const frame = document.getElementById('mobile-device-container');
+      const notch = document.getElementById('mobile-notch');
+      const btnI = document.getElementById('frame-btn-iphone');
+      const btnA = document.getElementById('frame-btn-android');
+
+      if (type === 'iphone') {
+        frame.className = 'iphone-frame flex flex-col';
+        notch.className = 'dynamic-island';
+        btnI.className = 'px-3 py-1 rounded-lg bg-velvet text-white font-bold transition';
+        btnA.className = 'px-3 py-1 rounded-lg bg-stone-700 text-stone-300 font-bold transition';
+      } else {
+        frame.className = 'android-frame flex flex-col';
+        notch.className = 'punch-hole';
+        btnA.className = 'px-3 py-1 rounded-lg bg-velvet text-white font-bold transition';
+        btnI.className = 'px-3 py-1 rounded-lg bg-stone-700 text-stone-300 font-bold transition';
+      }
+    }
+
+    function switchMobileTab(tab) {
+      currentMobileTab = tab;
+      ['home', 'catalog', 'oven', 'profile'].forEach(t => {
+        const btn = document.getElementById(`mtab-${t}`);
+        if (btn) {
+          btn.className = (t === tab) ? 'flex flex-col items-center gap-0.5 text-velvet' : 'flex flex-col items-center gap-0.5 text-stone-400 hover:text-espresso';
+        }
+      });
+      renderMobileContent();
+    }
+
+    function renderMobileContent() {
+      const sc = document.getElementById('mobile-screen-content');
+      if (!sc) return;
+
+      if (currentMobileTab === 'home') {
+        sc.innerHTML = `
+          <!-- Hero Card (Gradient / Luxury Bento) -->
+          <div class="p-4 rounded-3xl bg-gradient-to-br from-velvet to-rose-900 text-white shadow-lg space-y-3">
+            <div class="flex justify-between items-center text-xs text-rose-200">
+              <span>Cabang Senopati</span>
+              <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">Buka (08:00 - 22:00)</span>
+            </div>
+            <div>
+              <div class="text-[11px] text-rose-200">Omzet Toko Hari Ini</div>
+              <div class="text-2xl font-mono font-extrabold tracking-tight">Rp 14.850.000</div>
+            </div>
+            <div class="pt-2 border-t border-white/20 flex justify-between text-xs">
+              <span>128 Struk Transaksi</span>
+              <span class="text-goldlight font-bold">Laba: Rp 6.240.000</span>
+            </div>
+          </div>
+
+          <!-- Quick Actions 4 Bulat -->
+          <div class="grid grid-cols-4 gap-2 text-center text-[10px] font-bold text-stone-700 pt-1">
+            <button onclick="switchMobileTab('catalog')" class="space-y-1">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-white border border-hairline flex items-center justify-center text-velvet shadow-sm">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+              </div>
+              <span>Kasir POS</span>
+            </button>
+            <button onclick="openCustomCakeModal()" class="space-y-1">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-white border border-hairline flex items-center justify-center text-gold shadow-sm">
+                <i data-lucide="cake" class="w-5 h-5"></i>
+              </div>
+              <span>Custom</span>
+            </button>
+            <button onclick="switchMobileTab('oven')" class="space-y-1">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-white border border-hairline flex items-center justify-center text-roseaccent shadow-sm">
+                <i data-lucide="flame" class="w-5 h-5"></i>
+              </div>
+              <span>3 Oven</span>
+            </button>
+            <button onclick="openCashDrawer()" class="space-y-1">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-white border border-hairline flex items-center justify-center text-emerald-600 shadow-sm">
+                <i data-lucide="vault" class="w-5 h-5"></i>
+              </div>
+              <span>Laci Kas</span>
+            </button>
+          </div>
+
+          <!-- Live Activity Feed -->
+          <div class="space-y-2 pt-2">
+            <div class="text-xs font-bold text-stone-500 uppercase tracking-wider">Aktivitas Terakhir</div>
+            <div class="bg-white p-3 rounded-2xl border border-hairline flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">QR</div>
+                <div>
+                  <div class="font-bold text-espresso">Order #DBC-0128 Selesai</div>
+                  <div class="text-[10px] text-stone-400">Opera Cake + Almond Croissant</div>
+                </div>
+              </div>
+              <div class="font-mono font-bold text-emerald-600">+Rp 423.000</div>
+            </div>
+            <div class="bg-white p-3 rounded-2xl border border-hairline flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-amber-50 text-gold flex items-center justify-center font-bold">OV</div>
+                <div>
+                  <div class="font-bold text-espresso">Oven #2 Croissant Selesai</div>
+                  <div class="text-[10px] text-stone-400">24 pcs siap ke etalase</div>
+                </div>
+              </div>
+              <span class="text-[10px] text-stone-400">12:35</span>
+            </div>
+          </div>
+
+          <!-- CI/CD GitHub Actions Status Card -->
+          <div class="p-3.5 rounded-2xl bg-stone-900 text-white text-xs space-y-2 border border-stone-800">
+            <div class="flex items-center justify-between">
+              <span class="font-bold flex items-center gap-1.5"><i data-lucide="github" class="w-4 h-4"></i> GitHub Actions CI/CD</span>
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono">Ready to Release</span>
+            </div>
+            <p class="text-[10px] text-stone-400">Kompilasi iOS .ipa (macOS runner) & Android .apk (Ubuntu runner) berjalan otomatis di cloud tanpa SDK lokal.</p>
+          </div>
+        `;
+      } else if (currentMobileTab === 'catalog') {
+        sc.innerHTML = `
+          <div class="flex justify-between items-center">
+            <h3 class="font-serif font-bold text-lg text-espresso">Katalog & Kasir</h3>
+            <button onclick="openCustomCakeModal()" class="px-2.5 py-1 rounded-xl bg-velvet text-white text-[11px] font-bold">+ Custom</button>
+          </div>
+          <div class="space-y-2">
+            ${products.map(p => `
+              <div class="bg-white p-3 rounded-2xl border border-hairline flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">${p.emoji}</span>
+                  <div>
+                    <div class="font-bold text-xs text-espresso">${p.name}</div>
+                    <div class="text-[10px] font-mono text-stone-400">Rp ${p.price.toLocaleString('id-ID')} • Stok: ${p.stock}</div>
+                  </div>
+                </div>
+                <button onclick="addToCart('${p.id}'); alert('${p.name} ditambahkan ke kasir!');" class="w-7 h-7 rounded-lg bg-ivory text-espresso border border-hairline flex items-center justify-center font-bold text-xs">+</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else if (currentMobileTab === 'oven') {
+        sc.innerHTML = `
+          <h3 class="font-serif font-bold text-lg text-espresso">Status 3 Unit Oven KDS</h3>
+          <div class="space-y-3">
+            <div class="bg-white p-3.5 rounded-2xl border border-hairline space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-espresso">Deck 1 Stone Base</span>
+                <span class="font-mono font-bold text-roseaccent">230°C</span>
+              </div>
+              <div class="text-xs text-stone-500">Sourdough Loaf (Sisa 08:42)</div>
+              <button onclick="finishBaking(1, 'Country Sourdough')" class="w-full py-1.5 rounded-xl bg-stone-100 text-xs font-bold hover:bg-emerald-50">Selesaikan Batch</button>
+            </div>
+            <div class="bg-white p-3.5 rounded-2xl border border-hairline space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-espresso">Deck 2 Convection</span>
+                <span class="font-mono font-bold text-gold">185°C</span>
+              </div>
+              <div class="text-xs text-stone-500">Croissant Almond (Sisa 03:15)</div>
+              <button onclick="finishBaking(2, 'Croissant Almond')" class="w-full py-1.5 rounded-xl bg-stone-100 text-xs font-bold hover:bg-emerald-50">Selesaikan Batch</button>
+            </div>
+          </div>
+        `;
+      } else if (currentMobileTab === 'profile') {
+        sc.innerHTML = `
+          <div class="text-center py-4 space-y-2">
+            <div class="w-16 h-16 mx-auto rounded-full bg-velvet text-white flex items-center justify-center text-2xl font-serif font-bold shadow-md">D</div>
+            <div>
+              <div class="font-bold text-base text-espresso">D'Bai Cui Mobile Suite</div>
+              <div class="text-xs text-stone-400">Versi 1.0.0 (Production Release)</div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-hairline space-y-3 text-xs">
+            <div class="font-bold text-stone-700">Pengaturan Backend Server URL</div>
+            <input type="text" value="https://webui.5nod.com/staging/saint-sejarah-firaun/api" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2 font-mono text-[10px]" />
+            <p class="text-[10px] text-stone-400">Aplikasi mobile Flutter otomatis tersambung ke endpoint server produksi ini.</p>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

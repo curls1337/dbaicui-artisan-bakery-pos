@@ -1,0 +1,28 @@
+{
+  "mode": "otomatis",
+  "topic": "Bagaimana Proses Terjadinya Gerhana Matahari & Gerhana Bulan",
+  "provider": "google-ai-studio",
+  "model": "gemini-3.8-flash-tts",
+  "voice_id": "Fola",
+  "voice_label": "Fola (Wanita - Clear and friendly, Medium pitch)",
+  "language": "id-ID",
+  "style": "Friendly",
+  "pace": "natural",
+  "expressions": "antusias, edukatif, rasa kagum sains",
+  "visual_style": "Archetype 3: Kurzgesagt / Apple Organic Science + ElevenByte 3D WebGL",
+  "aspect_ratio": "9:16 (1080x1920)",
+  "target_duration_seconds": 60,
+  "duration_policy": "fleksibel ~1 menit mengikuti durasi audio natural Fola",
+  "caption_policy": "KaraokeYellowSubtitlePill (3-4 kata highlight kuning #FACC15)",
+  "elements": [
+    "Scene3DCanvas",
+    "EclipseOrbitalSimulation3D",
+    "ElevenByteTopHud",
+    "UxGlassHudCallout",
+    "KaraokeYellowSubtitlePill"
+  ],
+  "renderer": "--gl=angle",
+  "preview_status": "skipped_auto",
+  "qc_gate": "pending_user_confirmation",
+  "status": "in_progress"
+}

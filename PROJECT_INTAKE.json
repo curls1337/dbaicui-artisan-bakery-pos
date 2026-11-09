@@ -1,0 +1,40 @@
+{
+  "project_name": "D'Bai Cui Artisan Bakery & Cake Management System",
+  "slug": "saint-sejarah-firaun",
+  "mode": "3_hybrid_and_4_mobile",
+  "mode_label": "Mode 3 Hybrid (Client Showcase Staging + Full-Stack Production) + Mode 4 Mobile Cross-Platform (iOS .ipa & Android .apk via GitHub Actions)",
+  "business_type": "Artisan Bakery, Custom Cake, Patisserie & POS Retail/Cafe",
+  "reference_brands": "D'Bai Cui, The Harvest, Tous Les Jours, Monsieur Spoon",
+  "tech_stack": {
+    "backend": "Node.js (Express / TypeScript) REST API",
+    "frontend": "Modern Web Responsive SPA (Tailwind CSS, Glassmorphism, Chart.js, Lucide Icons)",
+    "database": "PostgreSQL / SQLite relational (schema.sql + seed.sql)",
+    "mobile": "Flutter Cross-Platform (Material 3 & Cupertino) iOS 17+ & Android 14",
+    "ci_cd": "GitHub Actions Cloud Build (macOS runner for iOS .ipa sideload, Ubuntu runner for Android .apk release)",
+    "auth": "JWT Bearer Token + Role Guard RBAC + Terminal Quick PIN Mode"
+  },
+  "roles": [
+    {
+      "id": "owner",
+      "name": "Owner / Superadmin",
+      "capabilities": ["Full Analytics", "Profit & Loss", "COGS/HPP", "Recipe Costing", "Staff Commission", "User Management"]
+    },
+    {
+      "id": "manager",
+      "name": "Store Manager & Head Baker",
+      "capabilities": ["Production Batches", "Oven Queue", "Raw Material Stock", "Expiry Tracker", "Recipe (BOM) Editor"]
+    },
+    {
+      "id": "cashier",
+      "name": "Kasir & Front-Desk POS",
+      "capabilities": ["Fast Tender POS", "Custom Birthday Cake Orders", "Thermal Receipt 58mm/80mm", "QRIS/Cash/Debit", "Member CRM"]
+    },
+    {
+      "id": "customer",
+      "name": "Pelanggan VIP / Member",
+      "capabilities": ["Cake Catalog", "Pre-Order Custom Cake", "Loyalty Points Tracking", "Order Status Timeline"]
+    }
+  ],
+  "staging_url": "https://webui.5nod.com/staging/saint-sejarah-firaun/",
+  "status": "in_progress"
+}

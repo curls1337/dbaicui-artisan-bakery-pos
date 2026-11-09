@@ -1,0 +1,8 @@
+node_modules/
+*.mp4
+*.wav
+*.jpg
+.DS_Store
+.env
+build/
+.dart_tool/
