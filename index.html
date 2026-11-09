@@ -107,37 +107,74 @@
       z-index: 40;
     }
 
-    /* Thermal Receipt Print Rules (Quiet Luxury POS Standards) */
+    /* Thermal Receipt Print Rules (Quiet Luxury POS Standards - Anti-Stripe & Single Sheet) */
+    :root {
+      --paper-size: 58mm;
+      --receipt-width: 48mm;
+    }
     @media print {
-      @page { size: 58mm auto; margin: 0mm; }
-      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-      body * { visibility: hidden; }
-      #thermal-receipt-area, #thermal-receipt-area * { visibility: visible; }
-      #thermal-receipt-area {
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 48mm !important;
-        max-width: 48mm !important;
+      @page {
+        size: var(--paper-size, 58mm) auto;
+        margin: 0mm !important;
+      }
+      html, body {
         margin: 0 !important;
-        padding: 2mm 0 !important;
-        border: none !important;
-        box-shadow: none !important;
+        padding: 0 !important;
         background: #ffffff !important;
         color: #000000 !important;
+      }
+      /* Hide all UI elements except receipt */
+      header, aside, main, #mobile-simulator-suite, #modal-custom-cake, #modal-payment, .no-print {
+        display: none !important;
+      }
+      #modal-receipt {
+        display: block !important;
+        position: static !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      #modal-receipt-dialog {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+        background: transparent !important;
+      }
+      #thermal-receipt-area {
+        display: block !important;
+        position: static !important;
+        margin: 0 auto !important;
+        padding: 1.5mm 0 !important;
+        width: var(--receipt-width, 48mm) !important;
+        max-width: var(--receipt-width, 48mm) !important;
+        border: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+        color: #000000 !important;
+        background: #ffffff !important;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
         font-weight: 700 !important;
         font-size: 11px !important;
         line-height: 1.25 !important;
         page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
-      .no-print { display: none !important; }
     }
   </style>
 </head>
 <body class="antialiased selection:bg-velvet selection:text-white">
+  <div id="pos-toast" class="fixed bottom-6 left-6 z-30 bg-espresso text-white px-4 py-2.5 rounded-2xl shadow-xl border border-stone-700 text-xs font-bold flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-10px]">
+    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    <span id="pos-toast-text">Item ditambahkan ke keranjang</span>
+  </div>
   <!-- TOP KIOSK HEADER & QUICK ROLE SWITCHER -->
   <header class="glass-bar sticky top-0 z-30 px-4 lg:px-6 py-2.5 flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -714,6 +751,20 @@
             </div>
           </div>
         </section>
+        <!-- FLOATING CART & QUICK CHECKOUT PILL -->
+        <div id="floating-cart-pill" class="fixed bottom-6 right-8 z-40 bg-espresso text-white p-3.5 px-5 rounded-2xl shadow-2xl border border-stone-700 hidden flex items-center gap-4 transition-all duration-300 no-print">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-velvet text-white flex items-center justify-center font-bold text-xs" id="float-qty">0</span>
+            <div>
+              <div class="text-[10px] text-stone-400 uppercase tracking-wider font-bold">Total Keranjang</div>
+              <div class="font-mono font-extrabold text-sm text-goldlight" id="float-total">Rp 0</div>
+            </div>
+          </div>
+          <button onclick="openPaymentModal()" class="px-4 py-2 rounded-xl bg-velvet text-white hover:bg-rose-900 font-bold text-xs flex items-center gap-2 shadow-md transition">
+            <span>Bayar / Checkout</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
       </main>
     </div>
 
@@ -829,58 +880,223 @@
     </div>
   </div>
 
-  <!-- MODAL: THERMAL RECEIPT PRINT PREVIEW (58mm / 80mm ESC/POS) -->
-  <div id="modal-receipt" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 w-full max-w-sm space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-hairline pb-2 no-print">
+  <!-- MODAL: PEMBAYARAN KASIR INTERAKTIF (TENDER MODAL) -->
+  <div id="modal-payment" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="luxury-card bg-white rounded-3xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-hairline pb-3">
         <div class="flex items-center gap-2">
-          <i data-lucide="printer" class="w-4 h-4 text-emerald-600"></i>
-          <h3 class="font-bold text-xs uppercase tracking-wider text-stone-600">Struk Kasir Siap Cetak</h3>
+          <i data-lucide="wallet" class="w-5 h-5 text-velvet"></i>
+          <h3 class="font-serif font-bold text-lg text-espresso">Pembayaran & Kasir Checkout</h3>
         </div>
-        <button onclick="closeReceiptModal()" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button onclick="closePaymentModal()" class="text-stone-400 hover:text-stone-700"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <!-- THERMAL RECEIPT CONTAINER (STRICTLY BORDERLESS, ZERO GRAYSCALE) -->
-      <div id="thermal-receipt-area" class="bg-white text-black p-4 font-mono text-xs leading-tight select-none">
-        <div class="text-center space-y-1">
-          <div class="font-extrabold text-sm uppercase">D'BAI CUI ARTISAN BAKERY</div>
-          <div class="text-[10px]">Jl. Senopati No. 42, Kebayoran Baru, Jaksel</div>
-          <div class="text-[10px]">Telp: 021-7281938 • NPWP: 82.193.847.2-012</div>
-          <div>--------------------------------</div>
+      <!-- Ringkasan Tagihan -->
+      <div class="p-3.5 rounded-2xl bg-ivory/80 border border-hairline flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-stone-400 uppercase font-bold tracking-wider">Total Tagihan Final</div>
+          <div class="text-2xl font-mono font-extrabold text-velvet tabular-nums" id="tender-total-bill">Rp 0</div>
+        </div>
+        <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-mono text-[11px] font-bold" id="tender-member-badge">Member Gold (Diskon 10%)</span>
+      </div>
+
+      <!-- Tab Metode Bayar -->
+      <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-stone-100 border border-hairline text-xs font-bold">
+        <button onclick="selectPaymentMethod('qris')" id="tab-pay-qris" class="py-2 rounded-xl bg-white text-espresso shadow-sm transition flex items-center justify-center gap-1.5">
+          <span>⚡ QRIS</span>
+        </button>
+        <button onclick="selectPaymentMethod('cash')" id="tab-pay-cash" class="py-2 rounded-xl text-stone-600 hover:text-espresso transition flex items-center justify-center gap-1.5">
+          <span>💵 Tunai</span>
+        </button>
+        <button onclick="selectPaymentMethod('edc')" id="tab-pay-edc" class="py-2 rounded-xl text-stone-600 hover:text-espresso transition flex items-center justify-center gap-1.5">
+          <span>💳 Kartu EDC</span>
+        </button>
+      </div>
+
+      <!-- CONTENT METODE 1: QRIS -->
+      <div id="method-panel-qris" class="space-y-3 text-center py-2">
+        <div class="w-44 h-44 mx-auto bg-white p-2.5 rounded-2xl border-2 border-stone-800 shadow-md flex flex-col items-center justify-center">
+          <!-- Real QR Code SVG Simulation -->
+          <svg class="w-36 h-36" viewBox="0 0 100 100" fill="#000000">
+            <path d="M0,0 h30 v30 h-30 z M5,5 v20 h20 v-20 z M10,10 h10 v10 h-10 z" />
+            <path d="M70,0 h30 v30 h-30 z M75,5 v20 h20 v-20 z M80,10 h10 v10 h-10 z" />
+            <path d="M0,70 h30 v30 h-30 z M5,75 v20 h20 v-20 z M10,80 h10 v10 h-10 z" />
+            <rect x="40" y="10" width="10" height="20" />
+            <rect x="55" y="5" width="10" height="10" />
+            <rect x="15" y="40" width="15" height="10" />
+            <rect x="40" y="40" width="20" height="20" />
+            <rect x="65" y="45" width="10" height="15" />
+            <rect x="80" y="40" width="15" height="10" />
+            <rect x="40" y="70" width="10" height="20" />
+            <rect x="55" y="80" width="15" height="10" />
+            <rect x="75" y="75" width="20" height="20" />
+          </svg>
+        </div>
+        <div class="text-[11px] font-mono text-stone-500">
+          NMID: ID1020261109012 • D'Bai Cui Bakery Senopati
+        </div>
+        <div class="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Menunggu Pindai QRIS Pelanggan...</span>
+        </div>
+      </div>
+
+      <!-- CONTENT METODE 2: TUNAI (CASH) -->
+      <div id="method-panel-cash" class="space-y-3 hidden">
+        <div>
+          <label class="text-[11px] font-bold text-stone-600 block mb-1">Nominal Uang Diterima (Rp)</label>
+          <input type="number" id="tender-cash-input" oninput="calculateCashChange()" placeholder="Contoh: 100000" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 font-mono text-base font-extrabold text-espresso focus:outline-none focus:ring-1 focus:ring-velvet" />
         </div>
 
-        <div class="text-[10px] space-y-0.5 my-2">
-          <div class="flex justify-between"><span>No:</span><span id="receipt-id" class="font-bold">DBC-20261109-0129</span></div>
-          <div class="flex justify-between"><span>Tgl:</span><span id="receipt-date">09/11/2026 12:45 WIB</span></div>
-          <div class="flex justify-between"><span>Kasir:</span><span id="receipt-cashier">Siti Rahma (POS-01)</span></div>
-          <div class="flex justify-between"><span>Pelanggan:</span><span id="receipt-customer">Jessica Tan (Gold VIP)</span></div>
-          <div>--------------------------------</div>
+        <!-- Tombol Cepat Pecahan -->
+        <div class="grid grid-cols-4 gap-1.5 font-mono text-xs">
+          <button onclick="setTenderCashPreset('exact')" class="py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold border border-hairline text-stone-700">Pas</button>
+          <button onclick="setTenderCashPreset(50000)" class="py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold border border-hairline text-stone-700">50.000</button>
+          <button onclick="setTenderCashPreset(100000)" class="py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold border border-hairline text-stone-700">100.000</button>
+          <button onclick="setTenderCashPreset(200000)" class="py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 font-bold border border-hairline text-stone-700">200.000</button>
         </div>
+
+        <!-- Perhitungan Kembalian -->
+        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+          <span class="text-xs font-bold text-emerald-800">Uang Kembalian:</span>
+          <span class="font-mono font-extrabold text-base text-emerald-700 tabular-nums" id="tender-cash-change">Rp 0</span>
+        </div>
+      </div>
+
+      <!-- CONTENT METODE 3: EDC / KARTU -->
+      <div id="method-panel-edc" class="space-y-3 hidden text-xs">
+        <div>
+          <label class="font-bold text-stone-600 block mb-1">Pilih Mesin EDC / Bank</label>
+          <select id="tender-edc-bank" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 font-bold text-espresso">
+            <option value="BCA EDC (Debit/Kredit)">BCA EDC Terminal 01</option>
+            <option value="Mandiri EDC (Debit/Kredit)">Mandiri EDC Terminal 02</option>
+            <option value="BRI EDC (Debit/Kredit)">BRI EDC Terminal 03</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-bold text-stone-600 block mb-1">Nomor Approval / Trace Code (Opsional)</label>
+          <input type="text" id="tender-edc-ref" placeholder="Contoh: 849201" class="w-full bg-ivory/60 border border-hairline rounded-xl p-2.5 font-mono text-espresso" />
+        </div>
+      </div>
+
+      <!-- Submit Checkout Button -->
+      <div class="pt-2 border-t border-hairline flex gap-2">
+        <button onclick="closePaymentModal()" class="w-1/3 py-2.5 rounded-xl text-xs font-bold text-stone-500 hover:bg-stone-100 transition">Batal</button>
+        <button onclick="finalizePaymentAndPrint()" class="w-2/3 py-2.5 rounded-xl bg-velvet text-white text-xs font-bold hover:bg-rose-900 shadow-md shadow-velvet/20 flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Bayar & Terbitkan Struk</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THERMAL RECEIPT PRINT PREVIEW (58mm / 80mm ESC/POS STANDAR RESMI) -->
+  <div id="modal-receipt" class="fixed inset-0 w-screen h-screen z-[100] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div id="modal-receipt-dialog" class="bg-white rounded-3xl p-5 w-full max-w-md max-h-[95vh] flex flex-col space-y-3 shadow-2xl relative">
+      
+      <!-- Top Print Controls (Hidden on physical print) -->
+      <div class="flex items-center justify-between border-b border-hairline pb-2.5 no-print bg-white z-20 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <h3 class="font-bold text-xs uppercase tracking-wider text-stone-700">Preview Struk Kasir Thermal</h3>
+        </div>
+        <button onclick="closeReceiptModal()" class="text-stone-400 hover:text-stone-800 p-1.5 rounded-xl hover:bg-stone-100 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <!-- Paper Size & Line Format Selectors -->
+      <div class="flex items-center justify-between gap-2 p-2 px-3 rounded-xl bg-stone-100 border border-hairline text-xs font-bold no-print shrink-0">
+        <div class="flex items-center gap-1.5">
+          <span class="text-stone-500">Ukuran Kertas:</span>
+          <button onclick="setReceiptPaperSize('58mm')" id="btn-paper-58" class="px-2.5 py-1 rounded-lg bg-white text-espresso shadow-sm transition">58mm (48mm)</button>
+          <button onclick="setReceiptPaperSize('80mm')" id="btn-paper-80" class="px-2.5 py-1 rounded-lg text-stone-500 hover:text-espresso transition">80mm (72mm)</button>
+        </div>
+        <button onclick="toggleReceiptDivider()" id="btn-divider-toggle" class="text-stone-600 hover:text-espresso underline text-[11px]">Format: Dashed</button>
+      </div>
+
+      <!-- SCROLLABLE THERMAL RECEIPT DISPLAY CONTAINER (OPTIMIZED HEIGHT) -->
+      <div class="flex-1 overflow-y-auto max-h-[62vh] p-3 bg-stone-50 rounded-2xl border border-stone-200 shadow-inner">
+        <div id="thermal-receipt-area" class="bg-white text-black font-mono text-[11px] leading-tight select-none border-0 shadow-sm mx-auto p-4 rounded-xl">
+        
+        <!-- Header -->
+        <div class="text-center space-y-0.5">
+          <div class="font-extrabold text-[13px] tracking-wide">D'BAI CUI ARTISAN BAKERY</div>
+          <div class="text-[10px]">Flagship Senopati 42, Kebayoran Baru, Jaksel</div>
+          <div class="text-[10px]">Telp: 021-7281938 • NPWP: 82.193.847.2-012</div>
+          <div class="receipt-divider font-bold">================================</div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="text-[10px] space-y-0.5 my-1.5">
+          <div class="flex justify-between"><span>No. Struk :</span><span id="receipt-id" class="font-bold">DBC-20261109-0129</span></div>
+          <div class="flex justify-between"><span>Tanggal   :</span><span id="receipt-date">09/11/2026 12:45:10</span></div>
+          <div class="flex justify-between"><span>Kasir     :</span><span id="receipt-cashier">Siti Rahma (POS-01)</span></div>
+          <div class="flex justify-between"><span>Pelanggan :</span><span id="receipt-customer">Jessica Tan (Gold VIP)</span></div>
+          <div class="receipt-divider font-bold">--------------------------------</div>
+        </div>
+
+        <!-- Column Header -->
+        <div class="flex justify-between text-[10px] font-bold pb-1">
+          <span>QTY  ITEM</span>
+          <span>TOTAL (RP)</span>
+        </div>
+        <div class="receipt-divider font-bold">--------------------------------</div>
 
         <!-- Line items -->
-        <div id="receipt-items" class="space-y-1 text-[10px]">
+        <div id="receipt-items" class="space-y-1 my-1">
           <!-- Injected via JS -->
         </div>
 
-        <div class="my-2">--------------------------------</div>
+        <div class="receipt-divider font-bold">--------------------------------</div>
 
+        <!-- Financial Breakdown -->
         <div class="space-y-0.5 text-[10px]">
-          <div class="flex justify-between"><span>Subtotal:</span><span id="receipt-subtotal">Rp 235.000</span></div>
-          <div class="flex justify-between"><span>Diskon Member:</span><span id="receipt-discount">- Rp 23.500</span></div>
-          <div class="flex justify-between"><span>PPN 10%:</span><span id="receipt-tax">Rp 21.150</span></div>
-          <div class="flex justify-between font-extrabold text-xs pt-1 border-t border-black">
-            <span>TOTAL:</span><span id="receipt-total">Rp 232.650</span>
+          <div class="flex justify-between"><span>Subtotal :</span><span id="receipt-subtotal">Rp 235.000</span></div>
+          <div class="flex justify-between"><span>Diskon Member :</span><span id="receipt-discount">- Rp 23.500</span></div>
+          <div class="flex justify-between"><span>PPN Resto 10% :</span><span id="receipt-tax">Rp 21.150</span></div>
+          <div class="receipt-divider font-bold">================================</div>
+          <div class="flex justify-between font-extrabold text-[12px] pt-0.5">
+            <span>TOTAL AKHIR :</span><span id="receipt-total">Rp 232.650</span>
           </div>
-          <div class="flex justify-between pt-1"><span>Metode Bayar:</span><span id="receipt-method" class="font-bold">QRIS BCA (LUNAS)</span></div>
+          <div class="receipt-divider font-bold">--------------------------------</div>
+          <div class="flex justify-between"><span>Metode Bayar :</span><span id="receipt-method" class="font-bold">QRIS BCA (LUNAS)</span></div>
+          <div class="flex justify-between" id="receipt-cash-row"><span>Uang Diterima :</span><span id="receipt-cash-tender">Rp 250.000</span></div>
+          <div class="flex justify-between font-bold" id="receipt-change-row"><span>Kembalian :</span><span id="receipt-cash-change">Rp 17.350</span></div>
+          <div class="receipt-divider font-bold">--------------------------------</div>
+          <div class="flex justify-between"><span>Poin Diperoleh:</span><span class="font-bold" id="receipt-loyalty">+23 Poin</span></div>
+          <div class="flex justify-between"><span>Total Poin Member:</span><span class="font-bold">1.873 Poin</span></div>
         </div>
 
-        <div class="text-center mt-3 pt-2 text-[9px] space-y-1">
-          <div>--------------------------------</div>
+        <!-- Footer -->
+        <div class="text-center mt-2.5 pt-1 text-[9.5px] space-y-0.5">
+          <div class="receipt-divider font-bold">================================</div>
           <div class="font-bold">TERIMA KASIH ATAS KUNJUNGAN ANDA!</div>
-          <div>Simpan struk ini untuk penukaran poin.</div>
-          <div>Instagram: @dbaicui.bakery</div>
+          <div>Simpan struk ini untuk penukaran reward.</div>
+          <div>Instagram: @dbaicui.patisserie</div>
+          <div class="font-bold pt-1">[ ||| | ||||| ||| |||| || ||| ]</div>
+          <div class="text-[8px] text-stone-600">D'Bai Cui Cloud POS v1.0 • 5nod.com</div>
         </div>
       </div>
+
+      </div>
+      <!-- Action Buttons (Hidden on physical print) -->
+      <div class="pt-1 flex flex-col gap-2 no-print shrink-0">
+        <button onclick="triggerThermalPrint()" class="w-full py-2.5 rounded-xl bg-black text-white text-xs font-bold hover:bg-stone-800 transition flex items-center justify-center gap-2 shadow-sm">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>Cetak Thermal Printer (ESC/POS)</span>
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="shareWhatsAppReceipt()" class="py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-1.5">
+            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+            <span>WhatsApp E-Receipt</span>
+          </button>
+          <button onclick="copyReceiptPlainText()" class="py-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-bold hover:bg-stone-200 transition flex items-center justify-center gap-1.5 border border-hairline">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Salin Teks Struk</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
       <!-- Action Buttons -->
       <div class="pt-2 flex flex-col gap-2 no-print">
@@ -1036,7 +1252,7 @@
       });
 
       grid.innerHTML = filtered.map(item => `
-        <div class="luxury-card rounded-2xl p-3.5 flex flex-col justify-between min-h-[225px] hover:border-gold/50 transition group">
+        <div onclick="addToCart('${item.id}', true)" class="luxury-card rounded-2xl p-3.5 flex flex-col justify-between min-h-[225px] hover:border-gold/70 hover:shadow-md cursor-pointer transition active:scale-[0.98] group select-none relative">
           <div>
             <div class="flex items-center justify-between">
               <span class="text-3xl">${item.emoji}</span>
@@ -1049,11 +1265,15 @@
           </div>
 
           <div class="mt-auto pt-3 border-t border-hairline/60 flex items-center justify-between">
-            <div class="font-mono font-extrabold text-xs text-espresso">
-              Rp ${item.price.toLocaleString('id-ID')}
+            <div>
+              <div class="text-[10px] text-stone-400 font-mono">Harga</div>
+              <div class="font-mono font-extrabold text-xs text-espresso">
+                Rp ${item.price.toLocaleString('id-ID')}
+              </div>
             </div>
-            <button onclick="addToCart('${item.id}')" class="w-8 h-8 rounded-xl bg-ivory hover:bg-velvet hover:text-white text-espresso flex items-center justify-center transition shadow-sm border border-hairline">
-              <i data-lucide="plus" class="w-4 h-4"></i>
+            <button onclick="event.stopPropagation(); addToCart('${item.id}', true)" class="px-2.5 py-1.5 rounded-xl bg-velvet text-white hover:bg-rose-900 flex items-center gap-1 text-[11px] font-bold transition shadow-sm shadow-velvet/20">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Tambah</span>
             </button>
           </div>
         </div>
@@ -1066,8 +1286,27 @@
       renderPosCatalog();
     }
 
-    // 6. CART & CHECKOUT ENGINE
-    function addToCart(productId) {
+    // 6. CART & CHECKOUT ENGINE + INTERACTIVE TENDER + THERMAL PRINT
+    let activePayMethod = 'qris';
+    let receiptPaperSize = '58mm';
+    let receiptDividerStyle = 'dashed';
+    let currentCalculatedBill = { subtotal: 0, discount: 0, tax: 0, total: 0, discountRate: 0, customerName: 'Jessica Tan (Gold VIP)' };
+
+    function showToast(msg) {
+      const toast = document.getElementById('pos-toast');
+      const txt = document.getElementById('pos-toast-text');
+      if (!toast || !txt) return;
+      txt.innerText = msg;
+      toast.classList.remove('opacity-0', 'translate-y-[-10px]');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-[-10px]');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    function addToCart(productId, withFeedback = false) {
       const prod = products.find(p => p.id === productId);
       if (!prod) return;
       const existing = cart.find(c => c.id === productId);
@@ -1077,6 +1316,12 @@
         cart.push({ ...prod, qty: 1 });
       }
       updateCartCalculations();
+      if (isMobileView && currentMobileTab === 'catalog') {
+        renderMobileContent();
+      }
+      if (withFeedback) {
+        showToast(`✓ +1 ${prod.name} masuk keranjang!`);
+      }
     }
 
     function changeCartQty(id, delta) {
@@ -1086,11 +1331,31 @@
         if (cart[idx].qty <= 0) cart.splice(idx, 1);
       }
       updateCartCalculations();
+      if (isMobileView && currentMobileTab === 'catalog') {
+        renderMobileContent();
+      }
     }
 
     function clearCart() {
       cart = [];
       updateCartCalculations();
+      if (isMobileView && currentMobileTab === 'catalog') {
+        renderMobileContent();
+      }
+    }
+
+    function computeBillSummary() {
+      const subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
+      const custSelect = document.getElementById('cart-customer-select')?.value || 'gold';
+      let discountRate = 0;
+      let customerName = 'Walk-in Customer';
+      if (custSelect === 'gold') { discountRate = 0.10; customerName = 'Jessica Tan (Gold VIP)'; }
+      if (custSelect === 'silver') { discountRate = 0.05; customerName = 'Andi Wijaya (Silver)'; }
+      const discount = Math.round(subtotal * discountRate);
+      const tax = Math.round((subtotal - discount) * 0.10);
+      const total = subtotal - discount + tax;
+      currentCalculatedBill = { subtotal, discount, tax, total, discountRate, customerName };
+      return currentCalculatedBill;
     }
 
     function updateCartCalculations() {
@@ -1103,10 +1368,26 @@
       const totalEl = document.getElementById('cart-total');
       const checkoutBtn = document.getElementById('btn-checkout');
 
+      const floatPill = document.getElementById('floating-cart-pill');
+      const floatQty = document.getElementById('float-qty');
+      const floatTotal = document.getElementById('float-total');
+
       const totalItems = cart.reduce((acc, c) => acc + c.qty, 0);
       if (badge) {
         badge.innerText = totalItems;
         badge.classList.toggle('hidden', totalItems === 0);
+      }
+
+      const bill = computeBillSummary();
+
+      if (floatPill) {
+        if (totalItems > 0 && !isMobileView) {
+          floatPill.classList.remove('hidden');
+          if (floatQty) floatQty.innerText = totalItems;
+          if (floatTotal) floatTotal.innerText = `Rp ${bill.total.toLocaleString('id-ID')}`;
+        } else {
+          floatPill.classList.add('hidden');
+        }
       }
 
       if (!container) return;
@@ -1116,7 +1397,7 @@
           <div class="py-10 text-center text-stone-400 space-y-1">
             <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto opacity-30"></i>
             <p class="text-xs">Keranjang masih kosong</p>
-            <p class="text-[10px]">Pilih kue dari katalog di sebelah kiri</p>
+            <p class="text-[10px]">Klik kartu kue di sebelah kiri untuk memesan</p>
           </div>
         `;
         if (subtotalEl) subtotalEl.innerText = 'Rp 0';
@@ -1136,9 +1417,9 @@
           </div>
           <div class="flex items-center gap-2">
             <div class="flex items-center bg-ivory rounded-lg border border-hairline">
-              <button onclick="changeCartQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-red-600">-</button>
+              <button onclick="changeCartQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-red-600 font-bold">-</button>
               <span class="w-6 text-center font-mono font-bold">${item.qty}</span>
-              <button onclick="changeCartQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-emerald-600">+</button>
+              <button onclick="changeCartQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-stone-500 hover:text-emerald-600 font-bold">+</button>
             </div>
             <div class="font-mono font-bold text-espresso w-20 text-right">
               Rp ${(item.price * item.qty).toLocaleString('id-ID')}
@@ -1147,80 +1428,167 @@
         </div>
       `).join('');
 
-      const subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
-      const custSelect = document.getElementById('cart-customer-select')?.value || 'gold';
-      let discountRate = 0;
-      if (custSelect === 'gold') discountRate = 0.10;
-      if (custSelect === 'silver') discountRate = 0.05;
-
-      const discount = Math.round(subtotal * discountRate);
-      const tax = Math.round((subtotal - discount) * 0.10);
-      const total = subtotal - discount + tax;
-
-      if (subtotalEl) subtotalEl.innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
-      if (discountEl) discountEl.innerText = `- Rp ${discount.toLocaleString('id-ID')}`;
-      if (discountLabel) discountLabel.innerText = `Diskon Member (${discountRate * 100}%)`;
-      if (taxEl) taxEl.innerText = `Rp ${tax.toLocaleString('id-ID')}`;
-      if (totalEl) totalEl.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+      if (subtotalEl) subtotalEl.innerText = `Rp ${bill.subtotal.toLocaleString('id-ID')}`;
+      if (discountEl) discountEl.innerText = `- Rp ${bill.discount.toLocaleString('id-ID')}`;
+      if (discountLabel) discountLabel.innerText = `Diskon Member (${bill.discountRate * 100}%)`;
+      if (taxEl) taxEl.innerText = `Rp ${bill.tax.toLocaleString('id-ID')}`;
+      if (totalEl) totalEl.innerText = `Rp ${bill.total.toLocaleString('id-ID')}`;
       if (checkoutBtn) checkoutBtn.disabled = false;
       lucide.createIcons();
     }
 
     function quickPay(method) {
-      if (cart.length === 0) return;
-      openPaymentModal(method);
+      if (cart.length === 0) {
+        showToast('⚠️ Keranjang masih kosong! Klik kue dulu.');
+        return;
+      }
+      if (method === 'exact') {
+        const bill = computeBillSummary();
+        openPaymentModal('cash', bill.total);
+      } else {
+        openPaymentModal(method);
+      }
     }
 
     function setCashAmount(amt) {
-      if (cart.length === 0) return;
-      alert(`Pembayaran Tunai Rp ${amt.toLocaleString('id-ID')} diterima. Menghitung kembalian...`);
+      if (cart.length === 0) {
+        showToast('⚠️ Keranjang masih kosong! Klik kue dulu.');
+        return;
+      }
       openPaymentModal('cash', amt);
     }
 
-    function openPaymentModal(method = 'qris', cashTender = null) {
-      if (cart.length === 0) return;
-      const subtotal = cart.reduce((acc, c) => acc + (c.price * c.qty), 0);
-      const custSelect = document.getElementById('cart-customer-select')?.value || 'gold';
-      let discountRate = custSelect === 'gold' ? 0.10 : (custSelect === 'silver' ? 0.05 : 0);
-      const discount = Math.round(subtotal * discountRate);
-      const tax = Math.round((subtotal - discount) * 0.10);
-      const total = subtotal - discount + tax;
+    function openPaymentModal(defaultMethod = 'qris', presetCash = null) {
+      if (cart.length === 0) {
+        showToast('⚠️ Pilih kue dari katalog terlebih dahulu.');
+        return;
+      }
+      const bill = computeBillSummary();
+      document.getElementById('tender-total-bill').innerText = `Rp ${bill.total.toLocaleString('id-ID')}`;
+      document.getElementById('tender-member-badge').innerText = bill.discountRate > 0 ? `Diskon Member ${bill.discountRate * 100}%` : 'Non-Member';
+      
+      selectPaymentMethod(defaultMethod === 'exact' ? 'cash' : defaultMethod);
+      if (defaultMethod === 'cash' || defaultMethod === 'exact') {
+        const cashVal = presetCash || bill.total;
+        document.getElementById('tender-cash-input').value = cashVal;
+        calculateCashChange();
+      } else {
+        document.getElementById('tender-cash-input').value = bill.total;
+        calculateCashChange();
+      }
+
+      const t = document.getElementById('pos-toast'); if(t) t.classList.add('opacity-0'); document.getElementById('modal-payment').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+    }
+
+    function selectPaymentMethod(method) {
+      activePayMethod = method;
+      ['qris', 'cash', 'edc'].forEach(m => {
+        const tabBtn = document.getElementById(`tab-pay-${m}`);
+        const panel = document.getElementById(`method-panel-${m}`);
+        if (tabBtn) {
+          tabBtn.className = (m === method)
+            ? 'py-2 rounded-xl bg-white text-espresso shadow-sm transition flex items-center justify-center gap-1.5'
+            : 'py-2 rounded-xl text-stone-600 hover:text-espresso transition flex items-center justify-center gap-1.5';
+        }
+        if (panel) {
+          panel.classList.toggle('hidden', m !== method);
+        }
+      });
+    }
+
+    function setTenderCashPreset(val) {
+      const bill = computeBillSummary();
+      const input = document.getElementById('tender-cash-input');
+      input.value = val === 'exact' ? bill.total : val;
+      calculateCashChange();
+    }
+
+    function calculateCashChange() {
+      const bill = computeBillSummary();
+      const received = parseInt(document.getElementById('tender-cash-input')?.value || '0', 10);
+      const change = received - bill.total;
+      const el = document.getElementById('tender-cash-change');
+      if (el) {
+        if (change < 0) {
+          el.innerText = `Kurang Rp ${Math.abs(change).toLocaleString('id-ID')}`;
+          el.className = 'font-mono font-extrabold text-base text-red-600 tabular-nums';
+        } else {
+          el.innerText = `Rp ${change.toLocaleString('id-ID')}`;
+          el.className = 'font-mono font-extrabold text-base text-emerald-700 tabular-nums';
+        }
+      }
+    }
+
+    function finalizePaymentAndPrint() {
+      const bill = computeBillSummary();
+      let methodLabel = 'QRIS BCA Dynamic (LUNAS)';
+      let cashReceived = bill.total;
+      let cashChange = 0;
+
+      if (activePayMethod === 'cash') {
+        cashReceived = parseInt(document.getElementById('tender-cash-input')?.value || '0', 10);
+        if (cashReceived < bill.total) {
+          alert(`Nominal uang tunai (Rp ${cashReceived.toLocaleString('id-ID')}) kurang dari total tagihan (Rp ${bill.total.toLocaleString('id-ID')})!`);
+          return;
+        }
+        cashChange = cashReceived - bill.total;
+        methodLabel = 'TUNAI / CASH (LUNAS)';
+      } else if (activePayMethod === 'edc') {
+        const bank = document.getElementById('tender-edc-bank')?.value || 'EDC BCA';
+        const ref = document.getElementById('tender-edc-ref')?.value || Math.floor(100000 + Math.random() * 900000);
+        methodLabel = `${bank} #${ref}`;
+      }
 
       lastTransaction = {
         id: 'DBC-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(100 + Math.random() * 900),
         date: new Date().toLocaleString('id-ID'),
-        customer: custSelect === 'gold' ? 'Jessica Tan (Gold VIP)' : (custSelect === 'silver' ? 'Andi Wijaya (Silver)' : 'Walk-in Customer'),
+        customer: bill.customerName,
         cashier: 'Siti Rahma (POS-01)',
         items: [...cart],
-        subtotal,
-        discount,
-        tax,
-        total,
-        method: method === 'qris' ? 'QRIS BCA (LUNAS)' : (method === 'exact' ? 'Tunai Uang Pas' : (method === 'edc' ? 'EDC Mandiri Debit' : `Tunai Rp ${cashTender?.toLocaleString('id-ID')}`))
+        subtotal: bill.subtotal,
+        discount: bill.discount,
+        tax: bill.tax,
+        total: bill.total,
+        method: methodLabel,
+        cashReceived,
+        cashChange,
+        loyaltyEarned: Math.floor(bill.total / 10000)
       };
 
       // Populate thermal receipt area
       document.getElementById('receipt-id').innerText = lastTransaction.id;
       document.getElementById('receipt-date').innerText = lastTransaction.date;
       document.getElementById('receipt-customer').innerText = lastTransaction.customer;
-      document.getElementById('receipt-subtotal').innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
-      document.getElementById('receipt-discount').innerText = `- Rp ${discount.toLocaleString('id-ID')}`;
-      document.getElementById('receipt-tax').innerText = `Rp ${tax.toLocaleString('id-ID')}`;
-      document.getElementById('receipt-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-subtotal').innerText = `Rp ${lastTransaction.subtotal.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-discount').innerText = `- Rp ${lastTransaction.discount.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-tax').innerText = `Rp ${lastTransaction.tax.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-total').innerText = `Rp ${lastTransaction.total.toLocaleString('id-ID')}`;
       document.getElementById('receipt-method').innerText = lastTransaction.method;
+      document.getElementById('receipt-cash-tender').innerText = `Rp ${lastTransaction.cashReceived.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-cash-change').innerText = `Rp ${lastTransaction.cashChange.toLocaleString('id-ID')}`;
+      document.getElementById('receipt-loyalty').innerText = `+${lastTransaction.loyaltyEarned} Poin`;
 
       const itemsEl = document.getElementById('receipt-items');
       itemsEl.innerHTML = lastTransaction.items.map(it => `
-        <div class="flex justify-between">
-          <span>${it.qty}x ${it.name}</span>
-          <span class="font-bold">Rp ${(it.price * it.qty).toLocaleString('id-ID')}</span>
+        <div class="space-y-0.5 text-[10px]">
+          <div class="flex justify-between font-bold">
+            <span>${it.qty}x ${it.name}</span>
+            <span>Rp ${(it.price * it.qty).toLocaleString('id-ID')}</span>
+          </div>
+          <div class="text-[9px] pl-4">@ Rp ${it.price.toLocaleString('id-ID')}</div>
         </div>
       `).join('');
 
-      // Open Modal
-      document.getElementById('modal-receipt').classList.remove('hidden');
-      
-      // Auto Deduct Product Etalase Stock
+      // Close tender modal & open receipt modal
+      closePaymentModal();
+      const t2 = document.getElementById('pos-toast'); if(t2) t2.classList.add('opacity-0'); document.getElementById('modal-receipt').classList.remove('hidden');
+
+      // Deduct stock
       lastTransaction.items.forEach(c => {
         const p = products.find(prod => prod.id === c.id);
         if (p) p.stock = Math.max(0, p.stock - c.qty);
@@ -1231,15 +1599,84 @@
       // Clear cart
       cart = [];
       updateCartCalculations();
+      if (isMobileView && currentMobileTab === 'catalog') {
+        renderMobileContent();
+      }
+      lucide.createIcons();
     }
 
     function closeReceiptModal() {
       document.getElementById('modal-receipt').classList.add('hidden');
     }
 
+    function setReceiptPaperSize(size) {
+      receiptPaperSize = size;
+      const root = document.documentElement;
+      const btn58 = document.getElementById('btn-paper-58');
+      const btn80 = document.getElementById('btn-paper-80');
+      if (size === '58mm') {
+        root.style.setProperty('--paper-size', '58mm');
+        root.style.setProperty('--receipt-width', '48mm');
+        btn58.className = 'px-2 py-1 rounded-lg bg-white text-espresso shadow-sm transition';
+        btn80.className = 'px-2 py-1 rounded-lg text-stone-500 hover:text-espresso transition';
+      } else {
+        root.style.setProperty('--paper-size', '80mm');
+        root.style.setProperty('--receipt-width', '72mm');
+        btn80.className = 'px-2 py-1 rounded-lg bg-white text-espresso shadow-sm transition';
+        btn58.className = 'px-2 py-1 rounded-lg text-stone-500 hover:text-espresso transition';
+      }
+    }
+
+    function toggleReceiptDivider() {
+      const divs = document.querySelectorAll('.receipt-divider');
+      const btn = document.getElementById('btn-divider-toggle');
+      if (receiptDividerStyle === 'dashed') {
+        receiptDividerStyle = 'clean';
+        divs.forEach(d => d.classList.add('hidden'));
+        if (btn) btn.innerText = 'Format Garis: Clean (Tanpa Garis)';
+      } else {
+        receiptDividerStyle = 'dashed';
+        divs.forEach(d => d.classList.remove('hidden'));
+        if (btn) btn.innerText = 'Format Garis: Dashed';
+      }
+    }
+
+    function triggerThermalPrint() {
+      window.print();
+    }
+
+    function copyReceiptPlainText() {
+      if (!lastTransaction) return;
+      const lines = [
+        "========================================",
+        "      D'BAI CUI ARTISAN BAKERY          ",
+        "   Flagship Senopati 42, Jakarta Sel.   ",
+        "========================================",
+        `No Struk : ${lastTransaction.id}`,
+        `Tanggal  : ${lastTransaction.date}`,
+        `Kasir    : ${lastTransaction.cashier}`,
+        `Customer : ${lastTransaction.customer}`,
+        "----------------------------------------",
+        ...lastTransaction.items.map(it => `${it.qty}x ${it.name} = Rp ${(it.price * it.qty).toLocaleString('id-ID')}`),
+        "----------------------------------------",
+        `Subtotal : Rp ${lastTransaction.subtotal.toLocaleString('id-ID')}`,
+        `Diskon   : -Rp ${lastTransaction.discount.toLocaleString('id-ID')}`,
+        `PPN 10%  : Rp ${lastTransaction.tax.toLocaleString('id-ID')}`,
+        `TOTAL    : Rp ${lastTransaction.total.toLocaleString('id-ID')}`,
+        `Bayar    : ${lastTransaction.method}`,
+        `Diterima : Rp ${lastTransaction.cashReceived.toLocaleString('id-ID')}`,
+        `Kembali  : Rp ${lastTransaction.cashChange.toLocaleString('id-ID')}`,
+        "========================================",
+        "    TERIMA KASIH ATAS KUNJUNGAN ANDA!   "
+      ].join("\n");
+      navigator.clipboard.writeText(lines);
+      showToast("✓ Teks struk berhasil disalin ke clipboard!");
+    }
+
     function shareWhatsAppReceipt() {
       if (!lastTransaction) return;
-      const text = `*D'BAI CUI ARTISAN BAKERY*%0ANo: ${lastTransaction.id}%0APelanggan: ${lastTransaction.customer}%0ATotal: Rp ${lastTransaction.total.toLocaleString('id-ID')}%0AStatus: LUNAS (${lastTransaction.method})%0ATerima kasih atas kunjungan Anda!`;
+      const itemsStr = lastTransaction.items.map(i => `• ${i.qty}x ${i.name} (Rp ${(i.price * i.qty).toLocaleString('id-ID')})`).join('%0A');
+      const text = `*D'BAI CUI ARTISAN BAKERY*%0ANo. Struk: *${lastTransaction.id}*%0ATanggal: ${lastTransaction.date}%0APelanggan: ${lastTransaction.customer}%0A%0A*Pesanan:*%0A${itemsStr}%0A%0ATotal Bayar: *Rp ${lastTransaction.total.toLocaleString('id-ID')}*%0AMetode: ${lastTransaction.method} (LUNAS)%0APoin Loyalty: +${lastTransaction.loyaltyEarned} Poin%0A%0ATerima kasih telah berbelanja di D'Bai Cui! 🥐🎂`;
       window.open(`https://wa.me/?text=${text}`, '_blank');
     }
 
@@ -1603,14 +2040,16 @@
           </div>
         `;
       } else if (currentMobileTab === 'catalog') {
+        const mobBill = computeBillSummary();
+        const mobQty = cart.reduce((a, b) => a + b.qty, 0);
         sc.innerHTML = `
           <div class="flex justify-between items-center">
             <h3 class="font-serif font-bold text-lg text-espresso">Katalog & Kasir</h3>
             <button onclick="openCustomCakeModal()" class="px-2.5 py-1 rounded-xl bg-velvet text-white text-[11px] font-bold">+ Custom</button>
           </div>
-          <div class="space-y-2">
+          <div class="space-y-2 pb-12">
             ${products.map(p => `
-              <div class="bg-white p-3 rounded-2xl border border-hairline flex items-center justify-between">
+              <div onclick="addToCart('${p.id}', true)" class="bg-white p-3 rounded-2xl border border-hairline flex items-center justify-between cursor-pointer active:scale-95 transition hover:border-gold">
                 <div class="flex items-center gap-3">
                   <span class="text-2xl">${p.emoji}</span>
                   <div>
@@ -1618,10 +2057,19 @@
                     <div class="text-[10px] font-mono text-stone-400">Rp ${p.price.toLocaleString('id-ID')} • Stok: ${p.stock}</div>
                   </div>
                 </div>
-                <button onclick="addToCart('${p.id}'); alert('${p.name} ditambahkan ke kasir!');" class="w-7 h-7 rounded-lg bg-ivory text-espresso border border-hairline flex items-center justify-center font-bold text-xs">+</button>
+                <button onclick="event.stopPropagation(); addToCart('${p.id}', true)" class="px-2.5 py-1 rounded-lg bg-velvet text-white font-bold text-[11px] shadow-sm">+ Tambah</button>
               </div>
             `).join('')}
           </div>
+          ${mobQty > 0 ? `
+            <div class="sticky bottom-1 bg-espresso text-white p-3 rounded-2xl shadow-xl flex items-center justify-between border border-stone-700">
+              <div>
+                <div class="text-[10px] text-stone-400 font-bold">${mobQty} Item di Keranjang</div>
+                <div class="font-mono font-extrabold text-xs text-goldlight">Rp ${mobBill.total.toLocaleString('id-ID')}</div>
+              </div>
+              <button onclick="openPaymentModal()" class="px-3.5 py-1.5 rounded-xl bg-velvet text-white text-xs font-bold shadow">Checkout ➔</button>
+            </div>
+          ` : ''}
         `;
       } else if (currentMobileTab === 'oven') {
         sc.innerHTML = `
